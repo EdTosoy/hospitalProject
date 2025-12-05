@@ -1,0 +1,24 @@
+{
+  "name": "hospital_project_monorepo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EdTosoy/hospitalProject.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/EdTosoy/hospitalProject/issues"
+  },
+  "homepage": "https://github.com/EdTosoy/hospitalProject#readme",
+  "packageManager": "pnpm@9.0.0"
+}
