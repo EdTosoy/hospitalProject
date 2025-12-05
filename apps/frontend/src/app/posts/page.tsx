@@ -10,7 +10,7 @@ interface Post {
 
 export default async function PostsPage() {
     // Fetch data from the NestJS backend
-    const res = await fetch('http://localhost:3000/posts', { cache: 'no-store' });
+    const res = await fetch('http://127.0.0.1:3000/posts', { cache: 'no-store' });
 
     if (!res.ok) {
         throw new Error('Failed to fetch posts');

@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service'; // ✅ YOUR service
 
 @Controller('posts') // API endpoint: /posts
 export class PostsController {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   @Get() // GET /posts
   async findAll() {
