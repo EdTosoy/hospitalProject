@@ -25,7 +25,7 @@ export class PatientsController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.DOCTOR, Role.NURSE)
+  @Roles(Role.DOCTOR, Role.NURSE, Role.PATIENT)
   create(@Request() req, @Body() createPatientDto: CreatePatientDto) {
     return this.patientsService.create(req.user.userId, createPatientDto);
   }
