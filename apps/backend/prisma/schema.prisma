@@ -12,7 +12,7 @@ model User {
   email     String   @unique
   name      String?
   password  String
-  roles     Role     @default(PATIENT)
+  role     Role     @default(PATIENT)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
