@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { QueueModule } from './queue/queue.module';
 import { BillingModule } from './billing/billing.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { BillingModule } from './billing/billing.module';
     AppointmentsModule,
     QueueModule,
     BillingModule,
+    PrismaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
