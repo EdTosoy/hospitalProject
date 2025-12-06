@@ -2,7 +2,6 @@ import { AppointmentStatus } from '@prisma/client';
 import {
   IsDateString,
   IsEnum,
-  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,

@@ -5,51 +5,50 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class QueueService {
-  constructor(private readonly prisma: PrismaService) { }
-
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(createQueueDto: CreateQueueDto) {
     const lastInQueue = await this.prisma.queue.findFirst({
       orderBy: {
         position: 'desc',
       },
-    })
+    });
 
     const nextPosition = (lastInQueue?.position || 0) + 1;
 
     return this.prisma.queue.create({
       data: {
         ...createQueueDto,
-        position: nextPosition
-      }
-    })
+        position: nextPosition,
+      },
+    });
   }
 
   findAll() {
     return this.prisma.queue.findMany({
       orderBy: {
-        position: 'asc'
+        position: 'asc',
       },
       include: {
-        patient: true
-      }
-    })
+        patient: true,
+      },
+    });
   }
 
   findOne(id: string) {
     return this.prisma.queue.findUnique({
-      where: { id }
-    })
+      where: { id },
+    });
   }
 
   update(id: string, updateQueueDto: UpdateQueueDto) {
     return this.prisma.queue.update({
       where: { id },
-      data: updateQueueDto
-    })
+      data: updateQueueDto,
+    });
   }
 
   remove(id: string) {
-    return this.prisma.queue.delete({ where: { id } })
+    return this.prisma.queue.delete({ where: { id } });
   }
 }

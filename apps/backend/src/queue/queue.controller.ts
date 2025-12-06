@@ -13,7 +13,7 @@ import { UpdateQueueDto } from './dto/update-queue.dto';
 
 @Controller('queue')
 export class QueueController {
-  constructor(private readonly queueService: QueueService) { }
+  constructor(private readonly queueService: QueueService) {}
 
   @Post()
   create(@Body() createQueueDto: CreateQueueDto) {
