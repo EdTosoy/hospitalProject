@@ -7,7 +7,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class PatientsService {
   constructor(private readonly prisma: PrismaService) { }
 
-  async create(userId: number, createPatientDto: CreatePatientDto) {
+  async create(userId: string, createPatientDto: CreatePatientDto) {
     const existingPatient = await this.prisma.patient.findUnique({
       where: { userId },
     });
@@ -30,18 +30,18 @@ export class PatientsService {
     return this.prisma.patient.findMany();
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return this.prisma.patient.findUnique({ where: { id } });
   }
 
-  update(id: number, updatePatientDto: UpdatePatientDto) {
+  update(id: string, updatePatientDto: UpdatePatientDto) {
     return this.prisma.patient.update({
       where: { id },
       data: updatePatientDto
     })
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return this.prisma.patient.delete({
       where: { id },
     })

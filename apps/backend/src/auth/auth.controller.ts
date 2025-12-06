@@ -9,15 +9,15 @@ export class AuthController {
   constructor(
     private usersService: UsersService,
     private authService: AuthService,
-  ) {}
+  ) { }
 
   @Post('register')
-  async register(@Body() dto: CreateUserDto) {
-    return this.usersService.create(dto);
+  async register(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
   }
 
   @Post('login')
-  async login(@Body() dto: LoginUserDto) {
-    return this.authService.login(dto);
+  async login(@Body() loginUserDto: LoginUserDto) {
+    return this.authService.login(loginUserDto);
   }
 }

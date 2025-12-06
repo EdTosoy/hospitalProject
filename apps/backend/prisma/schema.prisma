@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String      @id @default(uuid())
   email     String   @unique
   name      String?
   password  String
@@ -32,8 +32,8 @@ enum Role {
 }
 
 model Patient {
-  id        Int      @id @default(autoincrement())
-  userId    Int      @unique
+  id        String      @id @default(uuid())
+  userId    String      @unique
   user      User     @relation(fields: [userId], references: [id])
   
   firstName String
@@ -50,8 +50,8 @@ model Patient {
 
 
 model AuditLog {
-  id         Int      @id @default(autoincrement())
-  actorId    Int
+  id         String      @id @default(uuid())
+  actorId    String
   actor      User     @relation(fields: [actorId], references: [id])
   action     String   
   resource   String   
@@ -75,12 +75,12 @@ enum AppointmentStatus {
 }
 
 model Appointment {
-  id        Int               @id @default(autoincrement())
+  id        String               @id @default(uuid())
   
-  patientId Int
+  patientId String
   patient   Patient           @relation(fields: [patientId], references: [id])
   
-  doctorId  Int?
+  doctorId  String?
   doctor    User?             @relation("DoctorAppointments", fields: [doctorId], references: [id])
   
   dateTime  DateTime
