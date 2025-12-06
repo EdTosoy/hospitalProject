@@ -44,7 +44,9 @@ model Patient {
   address   String?
   appointments Appointment[]
   queue     Queue[]
+  billing   Billing[]
   
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -111,4 +113,28 @@ enum QueueStatus {
   IN_PROGRESS
   COMPLETED
   NO_SHOW
+}
+
+
+model Billing {
+  id            String        @id @default(uuid())
+  
+  patientId     String
+  patient       Patient       @relation(fields: [patientId], references: [id])
+  
+  appointmentId String?
+  
+  amount        Float
+  description   String
+  status        BillingStatus @default(PENDING)
+  
+  createdAt     DateTime      @default(now())
+  paidAt        DateTime?
+}
+
+enum BillingStatus {
+  PENDING
+  PAID
+  CANCELLED
+  OVERDUE
 }

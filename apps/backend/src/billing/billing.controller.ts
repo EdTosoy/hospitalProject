@@ -10,7 +10,9 @@ import {
 import { BillingService } from './billing.service';
 import { CreateBillingDto } from './dto/create-billing.dto';
 import { UpdateBillingDto } from './dto/update-billing.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @Controller('billing')
 export class BillingController {
   constructor(private readonly billingService: BillingService) {}
@@ -27,16 +29,16 @@ export class BillingController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.billingService.findOne(+id);
+    return this.billingService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateBillingDto: UpdateBillingDto) {
-    return this.billingService.update(+id, updateBillingDto);
+    return this.billingService.update(id, updateBillingDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.billingService.remove(+id);
+    return this.billingService.remove(id);
   }
 }
