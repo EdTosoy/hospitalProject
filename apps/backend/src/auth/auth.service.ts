@@ -9,7 +9,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async login(loginDto: LoginUserDto) {
     const user = await this.usersService.findOneByEmail(loginDto.email);
@@ -17,7 +17,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const isMatch = (await bcrypt.compare(loginDto.password, user.password))
+    const isMatch = await bcrypt.compare(loginDto.password, user.password);
 
     if (!isMatch) {
       throw new UnauthorizedException('Incorrect Password');

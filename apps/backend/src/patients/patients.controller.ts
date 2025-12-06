@@ -6,18 +6,28 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { PatientsService } from './patients.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
+import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
+import { Roles } from 'src/auth/roles/roles.decorators';
+import { Role } from '@prisma/client';
+import { RolesGuard } from 'src/auth/roles/roles.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @Controller('patients')
 export class PatientsController {
-  constructor(private readonly patientsService: PatientsService) {}
+  constructor(private readonly patientsService: PatientsService) { }
 
   @Post()
-  create(@Body() createPatientDto: CreatePatientDto) {
-    return this.patientsService.create(createPatientDto);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.DOCTOR, Role.NURSE)
+  create(@Request() req, @Body() createPatientDto: CreatePatientDto) {
+    return this.patientsService.create(req.user.userId, createPatientDto);
   }
 
   @Get()
