@@ -3,7 +3,11 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { PostsModule } from './posts/posts.module';
+import { PatientsModule } from './patients/patients.module';
+import { UsersModule } from './users/users.module';
+import { AppointmentsModule } from './appointments/appointments.module';
+import { QueueModule } from './queue/queue.module';
+import { BillingModule } from './billing/billing.module';
 
 @Module({
   imports: [
@@ -11,7 +15,11 @@ import { PostsModule } from './posts/posts.module';
       isGlobal: true,
     }),
     AuthModule,
-    PostsModule,
+    PatientsModule,
+    UsersModule,
+    AppointmentsModule,
+    QueueModule,
+    BillingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
