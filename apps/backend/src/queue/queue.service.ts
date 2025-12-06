@@ -1,26 +1,55 @@
 import { Injectable } from '@nestjs/common';
 import { CreateQueueDto } from './dto/create-queue.dto';
 import { UpdateQueueDto } from './dto/update-queue.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class QueueService {
-  create(createQueueDto: CreateQueueDto) {
-    return 'This action adds a new queue';
+  constructor(private readonly prisma: PrismaService) { }
+
+
+  async create(createQueueDto: CreateQueueDto) {
+    const lastInQueue = await this.prisma.queue.findFirst({
+      orderBy: {
+        position: 'desc',
+      },
+    })
+
+    const nextPosition = (lastInQueue?.position || 0) + 1;
+
+    return this.prisma.queue.create({
+      data: {
+        ...createQueueDto,
+        position: nextPosition
+      }
+    })
   }
 
   findAll() {
-    return `This action returns all queue`;
+    return this.prisma.queue.findMany({
+      orderBy: {
+        position: 'asc'
+      },
+      include: {
+        patient: true
+      }
+    })
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} queue`;
+  findOne(id: string) {
+    return this.prisma.queue.findUnique({
+      where: { id }
+    })
   }
 
-  update(id: number, updateQueueDto: UpdateQueueDto) {
-    return `This action updates a #${id} queue`;
+  update(id: string, updateQueueDto: UpdateQueueDto) {
+    return this.prisma.queue.update({
+      where: { id },
+      data: updateQueueDto
+    })
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} queue`;
+  remove(id: string) {
+    return this.prisma.queue.delete({ where: { id } })
   }
 }

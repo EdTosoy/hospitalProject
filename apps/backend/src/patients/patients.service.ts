@@ -5,7 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class PatientsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, createPatientDto: CreatePatientDto) {
     const existingPatient = await this.prisma.patient.findUnique({
@@ -37,13 +37,13 @@ export class PatientsService {
   update(id: string, updatePatientDto: UpdatePatientDto) {
     return this.prisma.patient.update({
       where: { id },
-      data: updatePatientDto
-    })
+      data: updatePatientDto,
+    });
   }
 
   remove(id: string) {
     return this.prisma.patient.delete({
       where: { id },
-    })
+    });
   }
 }

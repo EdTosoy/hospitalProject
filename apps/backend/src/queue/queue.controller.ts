@@ -13,7 +13,7 @@ import { UpdateQueueDto } from './dto/update-queue.dto';
 
 @Controller('queue')
 export class QueueController {
-  constructor(private readonly queueService: QueueService) {}
+  constructor(private readonly queueService: QueueService) { }
 
   @Post()
   create(@Body() createQueueDto: CreateQueueDto) {
@@ -27,16 +27,16 @@ export class QueueController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.queueService.findOne(+id);
+    return this.queueService.findOne(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateQueueDto: UpdateQueueDto) {
-    return this.queueService.update(+id, updateQueueDto);
+    return this.queueService.update(id, updateQueueDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.queueService.remove(+id);
+    return this.queueService.remove(id);
   }
 }

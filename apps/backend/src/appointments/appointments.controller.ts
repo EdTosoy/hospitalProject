@@ -17,11 +17,10 @@ import { RolesGuard } from 'src/auth/roles/roles.guard';
 import { Role } from '@prisma/client';
 import { Roles } from 'src/auth/roles/roles.decorators';
 
-
 @ApiBearerAuth()
 @Controller('appointments')
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) { }
+  constructor(private readonly appointmentsService: AppointmentsService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)

@@ -43,6 +43,7 @@ model Patient {
   phone     String
   address   String?
   appointments Appointment[]
+  queue     Queue[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -89,4 +90,25 @@ model Appointment {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Queue {
+  id         String      @id @default(uuid())
+
+  patientId  String
+  patient    Patient     @relation(fields: [patientId], references: [id])
+  
+  position   Int         // Their place in line (1, 2, 3...)
+  status     QueueStatus @default(WAITING)
+  
+  createdAt  DateTime    @default(now())
+  calledAt   DateTime?   // When doctor called them
+}
+
+enum QueueStatus {
+  WAITING
+  CALLED
+  IN_PROGRESS
+  COMPLETED
+  NO_SHOW
 }

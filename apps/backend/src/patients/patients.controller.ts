@@ -21,7 +21,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 @ApiBearerAuth()
 @Controller('patients')
 export class PatientsController {
-  constructor(private readonly patientsService: PatientsService) { }
+  constructor(private readonly patientsService: PatientsService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)

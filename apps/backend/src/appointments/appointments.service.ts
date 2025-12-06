@@ -5,32 +5,30 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AppointmentsService {
-  constructor(
-    private readonly prisma: PrismaService,
-  ) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(createAppointmentDto: CreateAppointmentDto) {
     return this.prisma.appointment.create({
-      data: createAppointmentDto
-    })
+      data: createAppointmentDto,
+    });
   }
 
   findAll() {
-    return this.prisma.appointment.findMany()
+    return this.prisma.appointment.findMany();
   }
 
   findOne(id: string) {
-    return this.prisma.appointment.findUnique({ where: { id } })
+    return this.prisma.appointment.findUnique({ where: { id } });
   }
 
   update(id: string, updateAppointmentDto: UpdateAppointmentDto) {
     return this.prisma.appointment.update({
       where: { id },
-      data: updateAppointmentDto
-    })
+      data: updateAppointmentDto,
+    });
   }
 
   remove(id: string) {
-    return this.prisma.appointment.delete({ where: { id } })
+    return this.prisma.appointment.delete({ where: { id } });
   }
 }
