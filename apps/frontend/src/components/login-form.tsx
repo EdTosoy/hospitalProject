@@ -23,7 +23,7 @@ export default function LoginForm() {
         onSuccess: () => {
           router.push("/dashboard");
         },
-      }
+      },
     );
   };
   return (

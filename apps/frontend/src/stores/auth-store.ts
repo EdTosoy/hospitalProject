@@ -24,7 +24,7 @@ export const useAuthStore = create<AuthState>()(
         logout: () => set({ token: null, user: null }),
         isAuthenticated: () => get().token !== null,
       }),
-      { name: "auth-storage" }
-    )
-  )
+      { name: "auth-storage" },
+    ),
+  ),
 );

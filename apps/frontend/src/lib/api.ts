@@ -4,7 +4,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 export async function apiFetch<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<T> {
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     headers: {
@@ -24,7 +24,7 @@ export async function apiFetch<T>(
 
 export async function apiAuthFetch<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<T> {
   const token = useAuthStore.getState().token;
 
