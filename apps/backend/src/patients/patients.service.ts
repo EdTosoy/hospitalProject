@@ -14,7 +14,7 @@ export class PatientsService {
 
     if (existingPatient) {
       throw new BadRequestException(
-        'Patien profile already exists for this user',
+        'Patient profile already exists for this user',
       );
     }
 
