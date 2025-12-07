@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useLogin } from "@/hooks/use-login";
 import { LoginInput, loginSchema } from "@/lib/validations/auth";
+import Link from "next/link";
 
 export default function LoginForm() {
   const {
@@ -69,6 +70,12 @@ export default function LoginForm() {
       >
         {login.isPending ? "Logging in..." : "Login"}
       </button>
+      <p className="text-center text-sm text-muted-foreground">
+        Don't have an account?
+        <Link href="/register" className="text-primary hover:underline">
+          Register
+        </Link>
+      </p>
     </form>
   );
 }

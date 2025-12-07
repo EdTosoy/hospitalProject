@@ -9,12 +9,14 @@ import {
   AppointmentInput,
   appointmentSchema,
 } from "@/lib/validations/appointment";
+import { useAuthStore } from "@/stores/auth-store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 export default function AppointmentPage() {
   const { data: appointments, isLoading, isError } = useAppointments();
   const createAppointment = useCreateAppointment();
+  const user = useAuthStore((state) => state.user);
 
   const {
     register,
@@ -27,8 +29,7 @@ export default function AppointmentPage() {
 
   const onSubmit = (data: AppointmentInput) => {
     createAppointment.mutate({
-      patientId: "temp-patient-id",
-      doctorId: "temp-doctor-id",
+      patientId: user?.id || "",
       dateTime: `${data.date}T${data.time}`,
       reason: data.reason,
       status: "PENDING",

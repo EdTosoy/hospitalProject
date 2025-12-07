@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 interface Appointment {
   id: string;
   patientId: string;
-  doctorId: string;
+  doctorId?: string;
   dateTime: string;
   reason: string;
   status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
