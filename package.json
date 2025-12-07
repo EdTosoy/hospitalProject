@@ -20,5 +20,8 @@
     "url": "https://github.com/EdTosoy/hospitalProject/issues"
   },
   "homepage": "https://github.com/EdTosoy/hospitalProject#readme",
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "devDependencies": {
+    "turbo": "^2.6.3"
+  }
 }
