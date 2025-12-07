@@ -5,29 +5,35 @@ import {
   useAppointments,
   useCreateAppointment,
 } from "@/hooks/use-appointments";
-import { FormEvent, useState } from "react";
+import {
+  AppointmentInput,
+  appointmentSchema,
+} from "@/lib/validations/appointment";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
 export default function AppointmentPage() {
   const { data: appointments, isLoading, isError } = useAppointments();
   const createAppointment = useCreateAppointment();
 
-  const [reason, setReason] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<AppointmentInput>({
+    resolver: zodResolver(appointmentSchema),
+  });
 
-  const handleCreate = (e: FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (data: AppointmentInput) => {
     createAppointment.mutate({
       patientId: "temp-patient-id",
       doctorId: "temp-doctor-id",
-      dateTime: `${date}T${time}`,
-      reason,
+      dateTime: `${data.date}T${data.time}`,
+      reason: data.reason,
       status: "PENDING",
     });
-
-    setReason("");
-    setDate("");
-    setTime("");
+    reset();
   };
 
   if (isLoading) return <div className="p-8">Loading Appointments...</div>;
@@ -36,24 +42,26 @@ export default function AppointmentPage() {
   return (
     <div className="p-8 space-y-8">
       <h1 className="text-2xl font-bold">Appointments</h1>
-      <form className="flex gap-4" onSubmit={handleCreate}>
+      <form className="flex gap-4" onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-          <Input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-          <Input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-          />
-          <Input
-            type="text"
-            placeholder="Reason"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
+          <div>
+            <Input type="date" {...register("date")} />
+            {errors.date && (
+              <p className="text-red-500 text-sm">{errors.date.message}</p>
+            )}
+          </div>
+          <div>
+            <Input type="time" {...register("time")} />
+            {errors.time && (
+              <p className="text-red-500 text-sm">{errors.time.message}</p>
+            )}
+          </div>
+          <div>
+            <Input type="text" placeholder="Reason" {...register("reason")} />
+            {errors.reason && (
+              <p className="text-red-500 text-sm">{errors.reason.message}</p>
+            )}
+          </div>
         </div>
 
         <button
