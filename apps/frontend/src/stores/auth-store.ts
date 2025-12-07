@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 interface User {
   id: string;
+  name: string;
   email: string;
   role: "PATIENT" | "DOCTOR" | "NURSE" | "FRONT_DESK" | "BILLING";
 }
@@ -24,7 +25,7 @@ export const useAuthStore = create<AuthState>()(
         logout: () => set({ token: null, user: null }),
         isAuthenticated: () => get().token !== null,
       }),
-      { name: "auth-storage" },
-    ),
-  ),
+      { name: "auth-storage" }
+    )
+  )
 );

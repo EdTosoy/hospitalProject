@@ -11,6 +11,7 @@ interface LoginResponse {
   access_token: string;
   user: {
     id: string;
+    name: string;
     email: string;
     role: "PATIENT" | "DOCTOR" | "NURSE" | "FRONT_DESK" | "BILLING";
   };

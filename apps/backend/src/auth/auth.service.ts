@@ -27,10 +27,17 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      name: user.name,
     };
 
     return {
       access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name,
+      },
     };
   }
 }
