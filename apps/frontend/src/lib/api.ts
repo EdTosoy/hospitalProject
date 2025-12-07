@@ -1,3 +1,5 @@
+import { useAuthStore } from "@/stores/auth-store";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 export async function apiFetch<T>(
@@ -22,9 +24,10 @@ export async function apiFetch<T>(
 
 export async function apiAuthFetch<T>(
   endpoint: string,
-  token: string,
   options?: RequestInit
 ): Promise<T> {
+  const token = useAuthStore.getState().token;
+
   return apiFetch<T>(endpoint, {
     ...options,
     headers: {

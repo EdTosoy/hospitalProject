@@ -1,0 +1,27 @@
+
+
+> frontend@0.1.0 build /Users/alter/hospital_project/apps/frontend
+> next build
+
+   [1m[38;2;173;127;168m▲ Next.js 16.0.7[39m[22m (Turbopack)
+
+ [37m[1m [22m[39m Creating an optimized production build ...
+ [32m[1m✓[22m[39m Compiled successfully in 1378.7ms
+[?25l [37m[1m [22m[39m Running TypeScript  [36m.[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m..[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m...[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m.[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m..[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m...[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m.[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m..[39m[2K[1G[?25h[?25l [37m[1m [22m[39m Finished TypeScript in 1496.2ms  [36m.[39m[2K[1G[?25h [37m[1m [22m[39m Finished TypeScript in 1496.2ms     [32m[1m✓[22m[39m Finished TypeScript in 1496.2ms 
+[?25l [37m[1m [22m[39m Collecting page data using 9 workers  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting page data using 9 workers  [36m..[39m[2K[1G[?25h [37m[1m [22m[39m Collecting page data using 9 workers in 239.6ms     [32m[1m✓[22m[39m Collecting page data using 9 workers in 239.6ms 
+[?25l [37m[1m [22m[39m Generating static pages using 9 workers (0/9)  [36m[    ][39m[2K[1G[?25h [32m[1m✓[22m[39m Generating static pages using 9 workers (9/9) in 196.5ms
+[?25l [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G[?25h [37m[1m [22m[39m Finalizing page optimization in 7.6ms     [32m[1m✓[22m[39m Finalizing page optimization in 7.6ms 
+
+[4mRoute (app)[24m
+┌ ○ /
+├ ○ /_not-found
+├ ○ /dashboard
+├ ○ /dashboard/appointment
+├ ○ /dashboard/patients
+├ ○ /dashboard/queue
+└ ○ /login
+
+
+○  (Static)  prerendered as static content
+
+[?25h
