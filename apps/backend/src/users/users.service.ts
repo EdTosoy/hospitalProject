@@ -3,6 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -36,14 +37,33 @@ export class UsersService {
     return result;
   }
 
-  findOneByEmail(email: string) {
-    return this.prisma.user.findUnique({
-      where: { email },
+  findByRole(role: Role) {
+    return this.prisma.user.findMany({
+      where: { role },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
     });
   }
 
   findAll() {
-    return `This action returns all users`;
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+      },
+    });
+  }
+
+  findOneByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+    });
   }
 
   findOne(id: number) {

@@ -5,6 +5,7 @@ import {
   useAppointments,
   useCreateAppointment,
 } from "@/hooks/use-appointments";
+import { useDoctors } from "@/hooks/use-doctors";
 import {
   AppointmentInput,
   appointmentSchema,
@@ -15,6 +16,7 @@ import { useForm } from "react-hook-form";
 
 export default function AppointmentPage() {
   const { data: appointments, isLoading, isError } = useAppointments();
+  const { data: doctors } = useDoctors();
   const createAppointment = useCreateAppointment();
   const user = useAuthStore((state) => state.user);
 
@@ -30,6 +32,7 @@ export default function AppointmentPage() {
   const onSubmit = (data: AppointmentInput) => {
     createAppointment.mutate({
       patientId: user?.id || "",
+      doctorId: data.doctorId || undefined,
       dateTime: `${data.date}T${data.time}`,
       reason: data.reason,
       status: "PENDING",
@@ -62,6 +65,19 @@ export default function AppointmentPage() {
             {errors.reason && (
               <p className="text-red-500 text-sm">{errors.reason.message}</p>
             )}
+          </div>
+          <div>
+            <select
+              {...register("doctorId")}
+              className="w-full p-3 border rounded-lg"
+            >
+              <option value="">Select Doctor (Optional)</option>
+              {doctors?.map((doctor) => (
+                <option key={doctor.id} value={doctor.id}>
+                  {doctor.name || doctor.email}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
