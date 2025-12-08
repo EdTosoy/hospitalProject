@@ -103,7 +103,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const sidebarUser = {
     name: user?.name || user?.role || "User",
     email: user?.email || "guest@pulse.hospital",
-    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || user?.email || "Guest")}&background=random`,
+    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || user?.email || "Guest")}&background=01bfa5&color=fff`,
   };
   return (
     <Sidebar collapsible="icon" {...props}>

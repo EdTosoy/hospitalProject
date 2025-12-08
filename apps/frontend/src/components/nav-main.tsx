@@ -31,9 +31,19 @@ export function NavMain({
           const isActive = pathname === item.url;
           return (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild isActive={isActive}>
+              <SidebarMenuButton
+                asChild
+                isActive={isActive}
+                className={isActive ? "bg-primary/10 text-primary" : ""}
+              >
                 <Link href={item.url}>
-                  {item.icon && <item.icon />}
+                  {item.icon && (
+                    <item.icon
+                      className={
+                        isActive ? "text-primary" : "text-muted-foreground"
+                      }
+                    />
+                  )}
                   <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
