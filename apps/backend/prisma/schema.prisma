@@ -98,6 +98,7 @@ model Queue {
 
   queueNumber Int
   status      QueueStatus @default(WAITING)
+  notes       String?
 
   createdAt DateTime  @default(now())
   calledAt  DateTime? // When doctor called them

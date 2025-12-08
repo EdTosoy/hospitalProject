@@ -2,12 +2,17 @@
 
 import { AddPatientModal } from "@/components/add-patient-modal";
 import { usePatients } from "@/hooks/use-patients";
+import { useAddToQueue } from "@/hooks/use-queue";
 import { Calendar, MapPin, Phone, Plus, User } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function PatientsPage() {
   const { data: patients, isLoading, isError } = usePatients();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [addingPatientId, setAddingPatientId] = useState<string | null>(null);
+
+  const addToQueue = useAddToQueue();
 
   if (isLoading) return <div className="p-8">Loading patients...</div>;
   if (isError) return <div className="p-8 text-red-500">Failed to load.</div>;
@@ -76,6 +81,28 @@ export default function PatientsPage() {
                 </span>
               </div>
             )}
+            <button
+              onClick={() => {
+                setAddingPatientId(patient.id);
+                addToQueue.mutate(
+                  { patientId: patient.id },
+                  {
+                    onSuccess: () => {
+                      toast.success(`${patient.firstName} added to queue!`);
+                      setAddingPatientId(null);
+                    },
+                    onError: (error) => {
+                      toast.error(error.message || "Failed to add to queue");
+                      setAddingPatientId(null);
+                    },
+                  }
+                );
+              }}
+              disabled={addingPatientId === patient.id}
+              className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 transition-colors"
+            >
+              {addingPatientId === patient.id ? "Adding..." : "Add to Queue"}
+            </button>
           </div>
         ))}
       </div>

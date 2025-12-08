@@ -31,3 +31,48 @@ export function useUpdateQueueStatus() {
     },
   });
 }
+
+export function useCallNext() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      apiAuthFetch<QueueEntry>("/queue/call-next", {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["queue"],
+      });
+    },
+  });
+}
+
+export function useCompleteQueue() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiAuthFetch<QueueEntry>(`/queue/${id}/complete`, {
+        method: "PATCH",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["queue"],
+      });
+    },
+  });
+}
+
+export function useAddToQueue() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { patientId: string; notes?: string }) => {
+      return apiAuthFetch<QueueEntry>("/queue/add-to-queue", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["queue"] });
+    },
+  });
+}
