@@ -1,6 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -8,15 +7,14 @@ datasource db {
 }
 
 model User {
-  id        String      @id @default(uuid())
+  id        String   @id @default(uuid())
   email     String   @unique
   name      String?
   password  String
-  role     Role     @default(PATIENT)
+  role      Role     @default(PATIENT)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-    // NEW: Relations
   patient            Patient?
   doctorAppointments Appointment[] @relation("DoctorAppointments")
   auditLogs          AuditLog[]
@@ -32,34 +30,32 @@ enum Role {
 }
 
 model Patient {
-  id        String      @id @default(uuid())
-  userId    String      @unique
-  user      User     @relation(fields: [userId], references: [id])
-  
-  firstName String
-  lastName  String
-  dob       DateTime
-  gender    Gender
-  phone     String
-  address   String?
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  firstName    String
+  lastName     String
+  dob          DateTime
+  gender       Gender
+  phone        String
+  address      String?
   appointments Appointment[]
-  queue     Queue[]
-  billing   Billing[]
-  
+  queue        Queue[]
+  billing      Billing[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-
 model AuditLog {
-  id         String      @id @default(uuid())
+  id         String   @id @default(uuid())
   actorId    String
   actor      User     @relation(fields: [actorId], references: [id])
-  action     String   
-  resource   String   
-  resourceId String   
-  details    String?  
+  action     String
+  resource   String
+  resourceId String
+  details    String?
   timestamp  DateTime @default(now())
 }
 
@@ -78,33 +74,33 @@ enum AppointmentStatus {
 }
 
 model Appointment {
-  id        String               @id @default(uuid())
-  
+  id String @id @default(uuid())
+
   patientId String
-  patient   Patient           @relation(fields: [patientId], references: [id])
-  
-  doctorId  String?
-  doctor    User?             @relation("DoctorAppointments", fields: [doctorId], references: [id])
-  
-  dateTime  DateTime
-  reason    String
-  status    AppointmentStatus @default(PENDING)
-  
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  doctorId String?
+  doctor   User?   @relation("DoctorAppointments", fields: [doctorId], references: [id])
+
+  dateTime DateTime
+  reason   String
+  status   AppointmentStatus @default(PENDING)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Queue {
-  id         String      @id @default(uuid())
+  id String @id @default(uuid())
 
-  patientId  String
-  patient    Patient     @relation(fields: [patientId], references: [id])
-  
-  position   Int         // Their place in line (1, 2, 3...)
-  status     QueueStatus @default(WAITING)
-  
-  createdAt  DateTime    @default(now())
-  calledAt   DateTime?   // When doctor called them
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+
+  queueNumber Int
+  status      QueueStatus @default(WAITING)
+
+  createdAt DateTime  @default(now())
+  calledAt  DateTime? // When doctor called them
 }
 
 enum QueueStatus {
@@ -115,21 +111,20 @@ enum QueueStatus {
   NO_SHOW
 }
 
-
 model Billing {
-  id            String        @id @default(uuid())
-  
-  patientId     String
-  patient       Patient       @relation(fields: [patientId], references: [id])
-  
+  id String @id @default(uuid())
+
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id])
+
   appointmentId String?
-  
-  amount        Float
-  description   String
-  status        BillingStatus @default(PENDING)
-  
-  createdAt     DateTime      @default(now())
-  paidAt        DateTime?
+
+  amount      Float
+  description String
+  status      BillingStatus @default(PENDING)
+
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
 }
 
 enum BillingStatus {

@@ -10,16 +10,16 @@ export class QueueService {
   async create(createQueueDto: CreateQueueDto) {
     const lastInQueue = await this.prisma.queue.findFirst({
       orderBy: {
-        position: 'desc',
+        queueNumber: 'desc',
       },
     });
 
-    const nextPosition = (lastInQueue?.position || 0) + 1;
+    const nextPosition = (lastInQueue?.queueNumber || 0) + 1;
 
     return this.prisma.queue.create({
       data: {
         ...createQueueDto,
-        position: nextPosition,
+        queueNumber: nextPosition,
       },
     });
   }
@@ -27,7 +27,7 @@ export class QueueService {
   findAll() {
     return this.prisma.queue.findMany({
       orderBy: {
-        position: 'asc',
+        queueNumber: 'asc',
       },
       include: {
         patient: true,

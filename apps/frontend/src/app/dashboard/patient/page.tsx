@@ -1,11 +1,13 @@
 "use client";
 
 import DashboardCard from "@/components/dashboard-card";
+import { useAppointments } from "@/hooks/use-appointments";
 import { useAuthStore } from "@/stores/auth-store";
 import { CalendarDays, User } from "lucide-react";
 
 export default function PatientDashboardPage() {
   const user = useAuthStore((state) => state.user);
+  const { data: appointments } = useAppointments();
 
   return (
     <div className="p-8 space-y-6">
@@ -17,6 +19,7 @@ export default function PatientDashboardPage() {
           description="View and book appointments"
           href="/dashboard/appointment"
           icon={CalendarDays}
+          count={appointments?.length}
         />
         <DashboardCard
           title="My Profile"

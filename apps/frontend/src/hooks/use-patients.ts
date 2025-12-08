@@ -4,11 +4,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 interface Patient {
   id: string;
   userId: string;
-  dateOfBirth: string;
+  firstName: string;
+  lastName: string;
+  dob: string;
   gender: "MALE" | "FEMALE" | "OTHER";
   phone: string;
-  address: string;
-  emergencyContact: string;
+  address?: string;
+  emergencyContact?: string;
 }
 
 export function usePatients() {
