@@ -2,6 +2,7 @@
 
 import DashboardCard from "@/components/dashboard-card";
 import { useAuthStore } from "@/stores/auth-store";
+import { CalendarDays, ListOrdered, User } from "lucide-react";
 
 export default function StaffDashboardPage() {
   const user = useAuthStore((state) => state.user);
@@ -15,16 +16,19 @@ export default function StaffDashboardPage() {
           title="Queue"
           description="Manage patient queue"
           href="/dashboard/queue"
+          icon={ListOrdered}
         />
         <DashboardCard
           title="Appointments"
           description="View all appointments"
           href="/dashboard/appointment"
+          icon={CalendarDays}
         />
         <DashboardCard
           title="Patients"
           description="Patient records"
           href="/dashboard/patients"
+          icon={User}
         />
       </div>
     </div>
