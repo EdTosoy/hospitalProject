@@ -47,3 +47,9 @@ Thumbs.db
 # Temporary
 tmp/
 temp/
+
+# Postman
+.postman/
+postman/
+*.postman_environment.json
+!*.postman_environment.example.json

@@ -1,0 +1,775 @@
+{
+  "info": {
+    "_postman_id": "8f66a8f7-a29b-4686-8962-8a999fd59d62",
+    "name": "Hospital Project API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET /",
+      "id": "0752468c-2eb8-4119-a413-14d54c42984c",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            ""
+          ]
+        },
+        "description": "Root endpoint"
+      }
+    },
+    {
+      "name": "POST /auth/register",
+      "id": "1ac23e82-26b4-42b1-8741-69905e456395",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/register",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        },
+        "description": "Register a new user"
+      }
+    },
+    {
+      "name": "POST /auth/login",
+      "id": "c3c3d96f-1650-472b-8932-bde26fb9e656",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "description": "Login user"
+      }
+    },
+    {
+      "name": "POST /users",
+      "id": "ba9c86fd-7d64-4d0b-b3f5-4ef12de9e6bd",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/users",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users"
+          ]
+        },
+        "description": "Create user"
+      }
+    },
+    {
+      "name": "GET /users/doctors",
+      "id": "5c8205ae-4dfc-4368-b5eb-162b35a0484b",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/users/doctors",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users",
+            "doctors"
+          ]
+        },
+        "description": "List doctors"
+      }
+    },
+    {
+      "name": "GET /users",
+      "id": "a586d687-493e-427d-aaef-97f90383d4b8",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/users",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users"
+          ]
+        },
+        "description": "List users"
+      }
+    },
+    {
+      "name": "GET /users/:id",
+      "id": "227b673f-2db9-4560-bf0e-36ff8d59bbef",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/users/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Get user by id"
+      }
+    },
+    {
+      "name": "PATCH /users/:id",
+      "id": "55c65da1-c08c-41fd-bf72-8082cbd3eaa9",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/users/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Update user by id"
+      }
+    },
+    {
+      "name": "DELETE /users/:id",
+      "id": "61b431d6-d58b-42bc-b515-0aef7316e7d7",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/users/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Delete user by id"
+      }
+    },
+    {
+      "name": "POST /patients",
+      "id": "e01f4618-2cdd-44cb-bdca-261e5534803f",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/patients",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "patients"
+          ]
+        },
+        "description": "Create patient (auth may be required)"
+      }
+    },
+    {
+      "name": "GET /patients",
+      "id": "2c865d7b-1281-4c0d-96a3-a0e75082ae6c",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/patients",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "patients"
+          ]
+        },
+        "description": "List patients"
+      }
+    },
+    {
+      "name": "GET /patients/:id",
+      "id": "e1bb60dc-0f5c-4175-8283-c8d25a38bd72",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/patients/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "patients",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Get patient by id"
+      }
+    },
+    {
+      "name": "PATCH /patients/:id",
+      "id": "16678336-82f3-489d-b65f-fc6299a23bd5",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/patients/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "patients",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Update patient by id"
+      }
+    },
+    {
+      "name": "DELETE /patients/:id",
+      "id": "0ec11b48-d55a-4161-9ba6-829b9daea7b8",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/patients/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "patients",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Delete patient by id"
+      }
+    },
+    {
+      "name": "POST /appointments",
+      "id": "cfc18772-d99c-4e8d-a3d3-77c9da569ac7",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/appointments",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "appointments"
+          ]
+        },
+        "description": "Create appointment (auth may be required)"
+      }
+    },
+    {
+      "name": "GET /appointments",
+      "id": "01293dac-1c52-4ab1-a9ca-8d51e40e5768",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/appointments",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "appointments"
+          ]
+        },
+        "description": "List appointments"
+      }
+    },
+    {
+      "name": "GET /appointments/:id",
+      "id": "bb09e559-6ac9-4ffc-b0d4-11bee86cea33",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/appointments/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "appointments",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Get appointment by id"
+      }
+    },
+    {
+      "name": "PATCH /appointments/:id",
+      "id": "5b66f3f9-7e60-4156-953e-6ed43826c5e4",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/appointments/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "appointments",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Update appointment by id"
+      }
+    },
+    {
+      "name": "DELETE /appointments/:id",
+      "id": "cf0a71ad-45d1-440b-82b8-4107192dba3f",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/appointments/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "appointments",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Delete appointment by id"
+      }
+    },
+    {
+      "name": "POST /queue",
+      "id": "c8ce4105-f806-454f-b1af-af25370d3c97",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/queue",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "queue"
+          ]
+        },
+        "description": "Create queue item"
+      }
+    },
+    {
+      "name": "GET /queue",
+      "id": "becee58c-a9c5-4082-9f7f-b01948ad559e",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/queue",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "queue"
+          ]
+        },
+        "description": "List queue items"
+      }
+    },
+    {
+      "name": "GET /queue/:id",
+      "id": "3877868e-4d66-4962-a3de-6647252d7426",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/queue/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "queue",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Get queue item by id"
+      }
+    },
+    {
+      "name": "PATCH /queue/:id",
+      "id": "b4ef576a-22f2-4710-811b-c284711b6c38",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/queue/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "queue",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Update queue item by id"
+      }
+    },
+    {
+      "name": "DELETE /queue/:id",
+      "id": "2bddce89-6cbb-4d70-9625-267fd81d8baf",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/queue/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "queue",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Delete queue item by id"
+      }
+    },
+    {
+      "name": "POST /billing",
+      "id": "bcf0ec72-596f-4415-b45f-01efa583f807",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/billing",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "billing"
+          ]
+        },
+        "description": "Create billing record (auth may be required)"
+      }
+    },
+    {
+      "name": "GET /billing",
+      "id": "f1e238a3-5c3a-4f92-a1c6-695a12ce5c70",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/billing",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "billing"
+          ]
+        },
+        "description": "List billing records"
+      }
+    },
+    {
+      "name": "GET /billing/:id",
+      "id": "2a2f3325-17f2-4283-a0b3-916ce17a932f",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/billing/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "billing",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Get billing record by id"
+      }
+    },
+    {
+      "name": "PATCH /billing/:id",
+      "id": "7560e898-d492-4e8b-b048-ae046da972b5",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/billing/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "billing",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Update billing record by id"
+      }
+    },
+    {
+      "name": "DELETE /billing/:id",
+      "id": "d6efb88a-f0be-484e-a779-bcebdc788b1e",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/billing/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "billing",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id"
+            }
+          ]
+        },
+        "description": "Delete billing record by id"
+      }
+    }
+  ]
+}
