@@ -1,14 +1,6 @@
 import { apiAuthFetch } from "@/lib/api";
+import { Appointment } from "@hospital/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-interface Appointment {
-  id: string;
-  patientId: string;
-  doctorId?: string;
-  dateTime: string;
-  reason: string;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
-}
 
 export function useAppointments() {
   return useQuery({

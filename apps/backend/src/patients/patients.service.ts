@@ -21,11 +21,20 @@ export class PatientsService {
     return this.prisma.patient.create({
       data: {
         ...createPatientDto,
+        dob: new Date(createPatientDto.dob).toISOString(),
         userId,
       },
     });
   }
 
+  async registerWalkIn(createPatientDto: CreatePatientDto) {
+    return this.prisma.patient.create({
+      data: {
+        ...createPatientDto,
+        dob: new Date(createPatientDto.dob).toISOString(),
+      },
+    });
+  }
   findAll() {
     return this.prisma.patient.findMany();
   }

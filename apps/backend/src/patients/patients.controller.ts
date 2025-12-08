@@ -30,6 +30,13 @@ export class PatientsController {
     return this.patientsService.create(req.user.userId, createPatientDto);
   }
 
+  @Post('register')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.NURSE, Role.FRONT_DESK, Role.DOCTOR, Role.ADMIN)
+  registerWalking(@Body() createPatientDto: CreatePatientDto) {
+    return this.patientsService.registerWalkIn(createPatientDto);
+  }
+
   @Get()
   findAll() {
     return this.patientsService.findAll();

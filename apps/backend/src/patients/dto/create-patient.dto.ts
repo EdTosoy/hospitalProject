@@ -1,11 +1,5 @@
 import { Gender } from '@prisma/client';
-import {
-  IsDateString,
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreatePatientDto {
   @IsNotEmpty()
@@ -17,7 +11,7 @@ export class CreatePatientDto {
   lastName!: string;
 
   @IsNotEmpty()
-  @IsDateString()
+  @IsString()
   dob!: string;
 
   @IsNotEmpty()

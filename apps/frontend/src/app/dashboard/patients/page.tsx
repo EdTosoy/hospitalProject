@@ -1,10 +1,13 @@
 "use client";
 
+import { AddPatientModal } from "@/components/add-patient-modal";
 import { usePatients } from "@/hooks/use-patients";
-import { Calendar, MapPin, Phone, User } from "lucide-react";
+import { Calendar, MapPin, Phone, Plus, User } from "lucide-react";
+import { useState } from "react";
 
 export default function PatientsPage() {
   const { data: patients, isLoading, isError } = usePatients();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (isLoading) return <div className="p-8">Loading patients...</div>;
   if (isError) return <div className="p-8 text-red-500">Failed to load.</div>;
@@ -16,6 +19,13 @@ export default function PatientsPage() {
         <p className="text-muted-foreground">
           {patients?.length || 0} registered
         </p>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add Patient
+        </button>
       </div>
 
       {patients?.length === 0 && (
@@ -69,6 +79,10 @@ export default function PatientsPage() {
           </div>
         ))}
       </div>
+      <AddPatientModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

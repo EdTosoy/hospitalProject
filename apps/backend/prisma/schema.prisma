@@ -30,9 +30,9 @@ enum Role {
 }
 
 model Patient {
-  id     String @id @default(uuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  id     String  @id @default(uuid())
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
 
   firstName    String
   lastName     String

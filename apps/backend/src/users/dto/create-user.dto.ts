@@ -29,8 +29,8 @@ export class CreateUserDto {
   @IsOptional()
   name?: string;
 
-  @ApiProperty({ example: 'DOCTOR', enum: Role })
+  @ApiProperty({ example: 'DOCTOR', enum: Role, required: false })
   @IsEnum(Role)
-  @IsNotEmpty()
-  role!: Role;
+  @IsOptional()
+  role?: Role;
 }

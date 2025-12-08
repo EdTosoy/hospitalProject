@@ -1,11 +1,6 @@
+import { User } from "@hospital/shared";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: "PATIENT" | "DOCTOR" | "NURSE" | "FRONT_DESK" | "BILLING";
-}
 
 interface AuthState {
   token: string | null;

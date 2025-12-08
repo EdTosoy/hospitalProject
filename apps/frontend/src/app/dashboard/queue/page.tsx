@@ -1,9 +1,8 @@
 "use client";
 
 import { useQueue, useUpdateQueueStatus } from "@/hooks/use-queue";
+import { QueueStatus } from "@hospital/shared";
 import { Clock, Hash, StickyNote } from "lucide-react";
-
-export type QueueStatus = "WAITING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 
 function getStatusColor(status: string) {
   switch (status) {

@@ -1,14 +1,6 @@
 import { apiAuthFetch } from "@/lib/api";
+import { QueueEntry } from "@hospital/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-interface QueueEntry {
-  id: string;
-  patientId: string;
-  queueNumber: number;
-  status: "WAITING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
-  notes?: string;
-  createdAt: string;
-}
 
 export function useQueue() {
   return useQuery({
