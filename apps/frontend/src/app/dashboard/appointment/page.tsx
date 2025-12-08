@@ -18,17 +18,17 @@ import { useForm } from "react-hook-form";
 function getStatusColor(status: string) {
   switch (status) {
     case "PENDING":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-amber-100 text-amber-700";
     case "CONFIRMED":
-      return "bg-blue-100 text-blue-800";
+      return "bg-primary/10 text-primary";
     case "COMPLETED":
-      return "bg-green-100 text-green-800";
+      return "bg-emerald-100 text-emerald-700";
     case "CANCELLED":
-      return "bg-red-100 text-red-800";
+      return "bg-red-100 text-red-700";
     case "NO_SHOW":
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-muted-foreground";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-muted-foreground";
   }
 }
 

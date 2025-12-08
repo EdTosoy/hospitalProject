@@ -29,7 +29,7 @@ export default function DashboardCard({
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
         {Icon && (
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+          <div className="p-2 rounded-xl bg-primary/10 text-primary">
             <Icon className="h-5 w-5" />
           </div>
         )}

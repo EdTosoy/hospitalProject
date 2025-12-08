@@ -67,12 +67,16 @@ export class UsersService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, _updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: string, updateUserDto: UpdateUserDto) {
+    return this.prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        name: updateUserDto.name,
+        email: updateUserDto.email,
+      },
+    });
   }
 
   remove(id: number) {
