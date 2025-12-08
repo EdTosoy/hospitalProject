@@ -1,32 +1,0 @@
-
-
-> frontend@0.1.0 build /Users/alter/hospital_project/apps/frontend
-> next build
-
-   [1m[38;2;173;127;168m▲ Next.js 16.0.7[39m[22m (Turbopack)
-
- [37m[1m [22m[39m Creating an optimized production build ...
- [32m[1m✓[22m[39m Compiled successfully in 1933.3ms
-[?25l [37m[1m [22m[39m Running TypeScript  [36m.[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m..[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m...[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m.[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m..[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m...[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m.[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m..[39m[2K[1G [37m[1m [22m[39m Running TypeScript  [36m...[39m[2K[1G[?25h[?25l [37m[1m [22m[39m Finished TypeScript in 1667.5ms  [36m.[39m[2K[1G[?25h [37m[1m [22m[39m Finished TypeScript in 1667.5ms     [32m[1m✓[22m[39m Finished TypeScript in 1667.5ms 
-[?25l [37m[1m [22m[39m Collecting page data using 9 workers  [36m.[39m[2K[1G [37m[1m [22m[39m Collecting page data using 9 workers  [36m..[39m[2K[1G[?25h [37m[1m [22m[39m Collecting page data using 9 workers in 325.0ms     [32m[1m✓[22m[39m Collecting page data using 9 workers in 325.0ms 
-[?25l [37m[1m [22m[39m Generating static pages using 9 workers (0/14)  [36m[    ][39m[2K[1G [37m[1m [22m[39m Generating static pages using 9 workers (0/14)  [36m[=   ][39m[2K[1G[?25h [32m[1m✓[22m[39m Generating static pages using 9 workers (14/14) in 267.1ms
-[?25l [37m[1m [22m[39m Finalizing page optimization  [36m.[39m[2K[1G[?25h [37m[1m [22m[39m Finalizing page optimization in 9.7ms     [32m[1m✓[22m[39m Finalizing page optimization in 9.7ms 
-
-[4mRoute (app)[24m
-┌ ○ /
-├ ○ /_not-found
-├ ○ /dashboard
-├ ○ /dashboard/appointment
-├ ○ /dashboard/doctor
-├ ○ /dashboard/patient
-├ ○ /dashboard/patients
-├ ○ /dashboard/profile
-├ ○ /dashboard/queue
-├ ○ /dashboard/staff
-├ ○ /login
-└ ○ /register
-
-
-○  (Static)  prerendered as static content
-
-[?25h
