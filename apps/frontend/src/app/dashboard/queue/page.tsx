@@ -80,12 +80,22 @@ export default function QueuePage() {
             key={entry.id}
             className="border p-4 rounded flex justify-between items-center hover:bg-accent/50 transition-colors"
           >
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 min-w-[80px]">
+            <div className="flex items-center gap-6">
+              {/* Queue Number */}
+              <div className="flex items-center gap-2 w-16">
                 <Hash className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xl font-bold">{entry.queueNumber}</span>
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
+
+              {/* Patient Name */}
+              <div className="w-40">
+                <span className="font-medium">
+                  {entry.patient?.firstName} {entry.patient?.lastName}
+                </span>
+              </div>
+
+              {/* Time */}
+              <div className="flex items-center gap-2 text-muted-foreground w-28">
                 <Clock className="h-4 w-4" />
                 <span className="text-sm">
                   {new Date(entry.createdAt).toLocaleTimeString()}
@@ -98,6 +108,7 @@ export default function QueuePage() {
                   <span className="text-sm truncate">{entry.notes}</span>
                 </div>
               )}
+
               {entry.status === "IN_PROGRESS" && (
                 <button
                   onClick={() => {
@@ -113,7 +124,7 @@ export default function QueuePage() {
                     });
                   }}
                   disabled={completeQueue.isPending}
-                  className="flex items-center gap-2 px-3 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 disabled:opacity-50 transition-colors ml-2"
+                  className="flex items-center gap-2 px-3 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 disabled:opacity-50 transition-colors"
                 >
                   <CheckCircle className="w-4 h-4" />
                   Complete

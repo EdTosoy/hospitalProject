@@ -3,7 +3,9 @@
 import { AddPatientModal } from "@/components/add-patient-modal";
 import { usePatients } from "@/hooks/use-patients";
 import { useAddToQueue } from "@/hooks/use-queue";
-import { Calendar, MapPin, Phone, Plus, User } from "lucide-react";
+import { useAuthStore } from "@/stores/auth-store";
+import { Calendar, FileText, MapPin, Phone, Plus, User } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -13,6 +15,7 @@ export default function PatientsPage() {
   const [addingPatientId, setAddingPatientId] = useState<string | null>(null);
 
   const addToQueue = useAddToQueue();
+  const user = useAuthStore((state) => state.user);
 
   if (isLoading) return <div className="p-8">Loading patients...</div>;
   if (isError) return <div className="p-8 text-red-500">Failed to load.</div>;
@@ -81,28 +84,39 @@ export default function PatientsPage() {
                 </span>
               </div>
             )}
-            <button
-              onClick={() => {
-                setAddingPatientId(patient.id);
-                addToQueue.mutate(
-                  { patientId: patient.id },
-                  {
-                    onSuccess: () => {
-                      toast.success(`${patient.firstName} added to queue!`);
-                      setAddingPatientId(null);
-                    },
-                    onError: (error) => {
-                      toast.error(error.message || "Failed to add to queue");
-                      setAddingPatientId(null);
-                    },
-                  }
-                );
-              }}
-              disabled={addingPatientId === patient.id}
-              className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 transition-colors"
-            >
-              {addingPatientId === patient.id ? "Adding..." : "Add to Queue"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setAddingPatientId(patient.id);
+                  addToQueue.mutate(
+                    { patientId: patient.id },
+                    {
+                      onSuccess: () => {
+                        toast.success(`${patient.firstName} added to queue!`);
+                        setAddingPatientId(null);
+                      },
+                      onError: (error) => {
+                        toast.error(error.message || "Failed to add to queue");
+                        setAddingPatientId(null);
+                      },
+                    }
+                  );
+                }}
+                disabled={addingPatientId === patient.id}
+                className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 transition-colors"
+              >
+                {addingPatientId === patient.id ? "Adding..." : "Add to Queue"}
+              </button>
+              {(user?.role === "DOCTOR" || user?.role === "NURSE") && (
+                <Link
+                  href={`/dashboard/consult/${patient.id}`}
+                  className="px-3 py-1 text-sm bg-emerald-500 text-white rounded hover:bg-emerald-600 transition-colors flex items-center gap-1"
+                >
+                  <FileText className="w-4 h-4" />
+                  Consult
+                </Link>
+              )}
+            </div>
           </div>
         ))}
       </div>

@@ -18,6 +18,7 @@ model User {
   patient            Patient?
   doctorAppointments Appointment[] @relation("DoctorAppointments")
   auditLogs          AuditLog[]
+  consultNotes       ConsultNote[] @relation("DoctorNotes")
 }
 
 enum Role {
@@ -44,8 +45,9 @@ model Patient {
   queue        Queue[]
   billing      Billing[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  consultNotes ConsultNote[]
 }
 
 model AuditLog {
@@ -102,6 +104,24 @@ model Queue {
 
   createdAt DateTime  @default(now())
   calledAt  DateTime? // When doctor called them
+}
+
+model ConsultNote {
+  id            String  @id @default(uuid())
+  patientId     String
+  patient       Patient @relation(fields: [patientId], references: [id])
+  doctorId      String
+  doctor        User    @relation("DoctorNotes", fields: [doctorId], references: [id])
+  appointmentId String? @unique
+
+  // SOAP format
+  subjective String?
+  objective  String?
+  assessment String?
+  plan       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum QueueStatus {

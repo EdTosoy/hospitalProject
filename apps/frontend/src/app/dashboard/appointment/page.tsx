@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import {
   useAppointments,
   useCreateAppointment,
+  useUpdateAppointmentStatus,
 } from "@/hooks/use-appointments";
 import { useDoctors } from "@/hooks/use-doctors";
 import {
@@ -14,6 +15,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Clock, FileText, User } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -34,9 +36,10 @@ function getStatusColor(status: string) {
 
 export default function AppointmentPage() {
   const { data: appointments, isLoading, isError } = useAppointments();
+  const user = useAuthStore((state) => state.user);
   const { data: doctors } = useDoctors();
   const createAppointment = useCreateAppointment();
-  const user = useAuthStore((state) => state.user);
+  const updateStatus = useUpdateAppointmentStatus();
 
   const {
     register,
@@ -169,14 +172,46 @@ export default function AppointmentPage() {
                 <span>{appointment.reason}</span>
               </div>
             </div>
-
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                appointment.status
-              )}`}
-            >
-              {appointment.status}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                  appointment.status
+                )}`}
+              >
+                {appointment.status}
+              </span>
+              {user?.role === "DOCTOR" && appointment.status === "PENDING" && (
+                <>
+                  <button
+                    onClick={() =>
+                      updateStatus.mutate(
+                        { id: appointment.id, status: "CONFIRMED" },
+                        {
+                          onSuccess: () =>
+                            toast.success("Appointment confirmed"),
+                        }
+                      )
+                    }
+                    disabled={updateStatus.isPending}
+                    className="px-3 py-1 bg-emerald-500 text-white rounded-lg text-sm hover:bg-emerald-600"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    onClick={() =>
+                      updateStatus.mutate(
+                        { id: appointment.id, status: "CANCELLED" },
+                        { onSuccess: () => toast.info("Appointment cancelled") }
+                      )
+                    }
+                    disabled={updateStatus.isPending}
+                    className="px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         ))}
       </div>

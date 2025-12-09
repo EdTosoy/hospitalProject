@@ -1,5 +1,5 @@
 import { apiAuthFetch } from "@/lib/api";
-import { Appointment } from "@hospital/shared";
+import { Appointment, AppointmentStatus } from "@hospital/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function useAppointments() {
@@ -22,6 +22,20 @@ export function useCreateAppointment() {
       queryClient.invalidateQueries({
         queryKey: ["appointments"],
       });
+    },
+  });
+}
+
+export function useUpdateAppointmentStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: AppointmentStatus }) =>
+      apiAuthFetch(`/appointments/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
     },
   });
 }

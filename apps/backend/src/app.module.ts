@@ -9,6 +9,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
 import { QueueModule } from './queue/queue.module';
 import { BillingModule } from './billing/billing.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { ConsultNotesModule } from './consult-notes/consult-notes.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { PrismaModule } from './prisma/prisma.module';
     QueueModule,
     BillingModule,
     PrismaModule,
+    ConsultNotesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
