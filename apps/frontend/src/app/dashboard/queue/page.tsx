@@ -81,20 +81,17 @@ export default function QueuePage() {
             className="border p-4 rounded flex justify-between items-center hover:bg-accent/50 transition-colors"
           >
             <div className="flex items-center gap-6">
-              {/* Queue Number */}
               <div className="flex items-center gap-2 w-16">
                 <Hash className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xl font-bold">{entry.queueNumber}</span>
               </div>
 
-              {/* Patient Name */}
               <div className="w-40">
                 <span className="font-medium">
                   {entry.patient?.firstName} {entry.patient?.lastName}
                 </span>
               </div>
 
-              {/* Time */}
               <div className="flex items-center gap-2 text-muted-foreground w-28">
                 <Clock className="h-4 w-4" />
                 <span className="text-sm">

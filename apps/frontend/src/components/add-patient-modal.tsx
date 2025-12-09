@@ -1,6 +1,4 @@
 import { useRegisterPatient } from "@/hooks/use-patients";
-import { useState } from "react";
-import type { Gender } from "@hospital/shared";
 import { useForm } from "react-hook-form";
 import {
   RegisterPatientInput,

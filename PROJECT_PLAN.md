@@ -58,29 +58,29 @@ src/
 - NetJS AuthModule, JWT Strategy, Login/Register endpoints.
 - RBAC Guards (`@Roles`).
 
-### 🚀 Day 3 (Dec 7 - TODAY): Patient & Appointment APIs
+### ✅ Day 3 (Dec 7): Patient & Appointment APIs
 - **Goal:** Backend CRUD for Patients and Appointments.
-- [ ] **Data Modeling:** Define `Patient` and `Appointment` in Prisma.
-- [ ] `PatientsModule`: Create/Get profile. **Crucial:** Row-Level Security (User can only see linked Patient profile).
-- [ ] `AppointmentsModule`: Book/Cancel slots. validation with Zod.
-- [ ] Postman verification.
+- [x] **Data Modeling:** Define `Patient` and `Appointment` in Prisma.
+- [x] `PatientsModule`: Create/Get profile. **Crucial:** Row-Level Security (User can only see linked Patient profile).
+- [x] `AppointmentsModule`: Book/Cancel slots. validation with Zod.
+- [x] Postman verification.
 
-### 📅 Day 4 (Dec 8): Queue & Billing APIs
+### ✅ Day 4 (Dec 8): Queue & Billing APIs
 - `QueueModule`: Add to queue / Call next.
 - `BillingModule`: Read-only list.
 - **Milestone:** Full Backend API "Steel Thread" complete.
 
-### 📅 Day 5 (Dec 9): Patient Portal Frontend
+### ✅ Day 5 (Dec 9): Patient Portal Frontend
 - Next.js Setup, TanStack Query, Auth Context.
 - Login / Register / Appointment Booking UI.
 
-### 📅 Day 6 (Dec 10): Staff Portal Frontend
+### ✅ Day 6 (Dec 10): Staff Portal Frontend
 - Role-based redirects (`/staff/dashboard`).
 - Queue Management UI (Front Desk).
 
-### 📅 Day 7 (Dec 11): Clinical UI
+### ✅ Day 7 (Dec 11): Clinical UI
 - Doctor Console (Patient Details + SOAP Notes).
-- Billing View.
+- Billing View (Read-Only).
 
 ### 📅 Day 8 (Dec 12): Deployment & Documentation
 - Deploy Vercel (Front) + Render/Railway (Back).

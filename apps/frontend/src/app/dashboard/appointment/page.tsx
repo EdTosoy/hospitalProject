@@ -13,7 +13,7 @@ import {
 } from "@/lib/validations/appointment";
 import { useAuthStore } from "@/stores/auth-store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, Clock, FileText, User } from "lucide-react";
+import { CalendarDays, Clock, FileText } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
