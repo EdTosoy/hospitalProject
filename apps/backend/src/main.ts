@@ -6,8 +6,15 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Production: MUST set CORS_ORIGIN env
+  // Development: Allows localhost
+  const isProduction = process.env.NODE_ENV === 'production';
+  const corsOrigins = isProduction
+    ? process.env.CORS_ORIGIN
+    : 'http://localhost:3001';
+
   app.enableCors({
-    origin: 'http://localhost:3001',
+    origin: corsOrigins,
     credentials: true,
   });
 
@@ -24,7 +31,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(3000);
+  await app.listen(process.env.PORT || 3000, '0.0.0.0');
 }
 bootstrap().catch((err) => {
   console.error('failed to start: ', err);
