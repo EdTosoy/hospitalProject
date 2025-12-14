@@ -9,4 +9,10 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  // Health check endpoint for Docker
+  @Get('health')
+  health(): { status: string } {
+    return { status: 'ok' };
+  }
 }
