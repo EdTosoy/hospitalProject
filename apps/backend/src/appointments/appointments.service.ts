@@ -2,10 +2,14 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import { AppointmentsGateway } from './appointments.gateway';
 
 @Injectable()
 export class AppointmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly AppointmentsGateway: AppointmentsGateway,
+  ) {}
 
   async create(createAppointmentDto: CreateAppointmentDto) {
     const patient = await this.prisma.patient.findUnique({
@@ -28,6 +32,7 @@ export class AppointmentsService {
       },
     });
 
+    this.AppointmentsGateway.emitAppointmentUpdated(appointment);
     return appointment;
   }
 

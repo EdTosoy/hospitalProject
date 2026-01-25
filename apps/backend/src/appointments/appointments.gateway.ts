@@ -22,7 +22,6 @@ export class AppointmentsGateway
   handleDisconnect(client: Socket) {
     console.log('Client disconnected:', client.id);
   }
-
   emitAppointmentUpdated(payload: any) {
     this.server.emit('appointment.updated', payload);
   }
