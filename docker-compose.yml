@@ -1,0 +1,29 @@
+services:
+  database:
+    image: "postgres:17"
+    ports:
+      - 15432:5432
+    env_file:
+      - .env
+    networks:
+      - postgres-network
+    volumes:
+      - pulse_db_data:/var/lib/postgresql/data/
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - 15433:80
+    env_file:
+      - .env
+    depends_on:
+      - database
+    networks:
+      - postgres-network
+    volumes:
+      - pulse_pgadmin_data:/var/lib/pgadmin/
+networks:
+  postgres-network:
+    driver: bridge
+volumes:
+  pulse_db_data:
+  pulse_pgadmin_data:
