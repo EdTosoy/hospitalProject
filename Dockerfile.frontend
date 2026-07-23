@@ -11,18 +11,14 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-ARG DATABASE_URL
-ENV DATABASE_URL=$DATABASE_URL
-RUN cd apps/backend && npx prisma generate
-RUN npx turbo run build --filter=backend
-rUN pnpm --filter=backend deploy --prod /app/deploy/backend
-RUN cp -r apps/backend/prisma /app/deploy/backend/prisma
-RUN cd /app/deploy/backend && npx prisma generate
+RUN npx turbo run build --filter=frontend
 
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-COPY --from=builder /app/deploy/backend ./
+COPY --from=builder /app/apps/frontend/.next/standalone ./
+COPY --from=builder /app/apps/frontend/.next/static ./apps/frontend/.next/static
+COPY --from=builder /app/apps/frontend/public ./apps/frontend/public
 
-EXPOSE 8080
-CMD ["node", "dist/src/main.js"]
+EXPOSE 3000
+CMD ["node", "apps/frontend/server.js"]
