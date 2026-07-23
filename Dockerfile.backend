@@ -1,15 +1,12 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
-
 RUN corepack enable
 
-# Copy root manifests first
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/ui/package.json ./packages/ui/
-
 RUN pnpm install --frozen-lockfile
 
 COPY . .
@@ -17,29 +14,15 @@ COPY . .
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 RUN cd apps/backend && npx prisma generate
-
 RUN npx turbo run build --filter=backend
-
+RUN pnpm --filter=backend deploy --prod /app/deploy/backend
+RUN cp -r apps/backend/prisma /app/deploy/backend/prisma
+RUN cd /app/deploy/backend && npx prisma generate
 
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-RUN corepack enable
-
-# Only the manifests needed to do a PRODUCTION-ONLY install
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-COPY apps/backend/package.json ./apps/backend/
-
-# Fresh install, prod deps only — no typescript, no @types/*, no nest-cli, etc.
-RUN pnpm install --frozen-lockfile --prod
-
-# Compiled backend output, built by builder
-COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
-
-# Prisma's generated client lives inside node_modules/.prisma — a fresh
-# --prod install above does NOT regenerate it (that needs `prisma generate`,
-# a build-time step), so it must be copied from the builder explicitly
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/deploy/backend ./
 
 EXPOSE 8080
-CMD ["node", "apps/backend/dist/src/main.js"]
+CMD ["node", "dist/src/main.js"]
