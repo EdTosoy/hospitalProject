@@ -9,6 +9,7 @@ services:
       - postgres-network
     volumes:
       - pulse_db_data:/var/lib/postgresql/data/
+
   pgadmin:
     image: dpage/pgadmin4
     ports:
@@ -22,6 +23,7 @@ services:
     volumes:
       - pulse_pgadmin_data:/var/lib/pgadmin/
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+
   backend:
     build:
       context: .
@@ -36,9 +38,24 @@ services:
       - database
     networks:
       - postgres-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    ports:
+      - 3000:3000
+    depends_on:
+      - backend
+    networks:
+      - postgres-network
+
 networks:
   postgres-network:
     driver: bridge
+
 volumes:
   pulse_db_data:
   pulse_pgadmin_data:
