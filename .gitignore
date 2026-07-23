@@ -52,3 +52,9 @@ temp/
 postman/
 *.postman_environment.json
 !*.postman_environment.example.json
+
+
+# terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
