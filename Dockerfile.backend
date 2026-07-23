@@ -1,36 +1,45 @@
-FROM node:20-alpine
-
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Enable corepack so the exact pnpm version this project expects is available
-# (pnpm isn't preinstalled in the base node image — corepack ships with Node 20+
-# and reads the "packageManager" field in package.json to fetch the right version)
 RUN corepack enable
 
 # Copy root manifests first
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-
-# Copy every workspace package's package.json — pnpm needs to see the whole
-# workspace graph to resolve internal deps like @hospital/shared correctly
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/ui/package.json ./packages/ui/
 
-# Install — cached as long as none of the above manifests change
 RUN pnpm install --frozen-lockfile
 
-# Now bring in the rest of the source
 COPY . .
 
-# Prisma needs DATABASE_URL resolvable at generate time
 ARG DATABASE_URL
 ENV DATABASE_URL=$DATABASE_URL
 RUN cd apps/backend && npx prisma generate
 
-# Build just the backend (and whatever it depends on, via turbo's dependency graph)
 RUN npx turbo run build --filter=backend
 
-EXPOSE 8080
 
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+RUN corepack enable
+
+# Only the manifests needed to do a PRODUCTION-ONLY install
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/backend/package.json ./apps/backend/
+
+# Fresh install, prod deps only — no typescript, no @types/*, no nest-cli, etc.
+RUN pnpm install --frozen-lockfile --prod
+
+# Compiled backend output, built by builder
+COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+
+# Prisma's generated client lives inside node_modules/.prisma — a fresh
+# --prod install above does NOT regenerate it (that needs `prisma generate`,
+# a build-time step), so it must be copied from the builder explicitly
+COPY --from=builder /app/node_modules ./node_modules
+
+EXPOSE 8080
 CMD ["node", "apps/backend/dist/src/main.js"]
