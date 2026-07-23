@@ -1,0 +1,61 @@
+services:
+  database:
+    image: "postgres:17"
+    ports:
+      - 15432:5432
+    env_file:
+      - .env
+    networks:
+      - postgres-network
+    volumes:
+      - pulse_db_data:/var/lib/postgresql/data/
+
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - 15433:80
+    env_file:
+      - .env
+    depends_on:
+      - database
+    networks:
+      - postgres-network
+    volumes:
+      - pulse_pgadmin_data:/var/lib/pgadmin/
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - 8080:8080
+    env_file:
+      - ./apps/backend/.env
+    depends_on:
+      - database
+    networks:
+      - postgres-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    ports:
+      - 3000:3000
+    depends_on:
+      - backend
+    networks:
+      - postgres-network
+
+networks:
+  postgres-network:
+    driver: bridge
+
+volumes:
+  pulse_db_data:
+  pulse_pgadmin_data:

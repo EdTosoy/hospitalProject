@@ -1,20 +1,20 @@
 {
-    "name": "@hospital/ui",
-    "version": "0.0.0",
-    "main": "./src/index.tsx",
-    "types": "./src/index.tsx",
-    "exports": {
-        ".": "./src/index.tsx"
-    },
-    "scripts": {
-        "lint": "eslint \"**/*.ts*\""
-    },
-    "devDependencies": {
-        "typescript": "^5.0.0",
-        "react": "^19.0.0",
-        "@types/react": "^19.0.0"
-    },
-    "peerDependencies": {
-        "react": ">=19.0.0"
-    }
+  "name": "@hospital/ui",
+  "version": "0.0.0",
+  "main": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "exports": {
+    ".": "./src/index.tsx"
+  },
+  "scripts": {
+    "lint": "eslint \"**/*.ts*\""
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "react": "^19.0.0",
+    "@types/react": "^19.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0"
+  }
 }

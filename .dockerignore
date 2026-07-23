@@ -1,47 +1,6 @@
-# Dependencies
+.next/
+dist/
+.env*
+.git/
+.turbo/
 node_modules
-**/node_modules
-
-# Build outputs
-dist
-.next
-out
-build
-
-# Git
-.git
-.gitignore
-
-# IDE
-.vscode
-.idea
-*.swp
-*.swo
-
-# Environment files (secrets - inject via Coolify)
-.env
-.env.*
-!.env.example
-
-# Logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-
-# Testing
-coverage
-.nyc_output
-
-# Misc
-.DS_Store
-*.tgz
-.turbo
-
-# Prisma
-apps/backend/prisma/migrations/*.sql.bak
-
-# Documentation (optional, keeps image smaller)
-docs
-postman
-*.md
-!README.md

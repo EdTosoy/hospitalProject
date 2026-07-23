@@ -6,7 +6,6 @@ package-lock.json
 .turbo
 
 # Prisma
-**/prisma/migrations
 **/*.prisma.client
 
 # Next.js
@@ -53,3 +52,9 @@ temp/
 postman/
 *.postman_environment.json
 !*.postman_environment.example.json
+
+
+# terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
