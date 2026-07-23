@@ -1,77 +1,107 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
 
-# Configuration
-REGION="asia-southeast1" # Adjusted to likely user timezone
-REPO_NAME="hospital-repo"
+set -euo pipefail
 
-echo "🏥 Pulse Hospital Deployment Script"
-echo "==================================="
+REGION="asia-southeast1"
+REPOSITORY="hospital-repo"
+BACKEND_SERVICE="hospital-backend"
+FRONTEND_SERVICE="hospital-frontend"
 
-# 1. Check for Project ID
-PROJECT_ID=$(gcloud config get-value project)
-if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" == "(unset)" ]; then
-    echo "❌ No Google Cloud Project selected."
-    echo "Run: gcloud config set project [YOUR_PROJECT_ID]"
+log() {
+    printf "[INFO] %s\n" "$1"
+}
+
+error() {
+    printf "[ERROR] %s\n" "$1" >&2
+}
+
+PROJECT_ID="$(gcloud config get-value project 2>/dev/null)"
+
+if [[ -z "$PROJECT_ID" || "$PROJECT_ID" == "(unset)" ]]; then
+    error "No Google Cloud project configured."
+    error "Run: gcloud config set project <PROJECT_ID>"
     exit 1
 fi
-echo "✅ Using Project: $PROJECT_ID"
 
-# 2. Enable APIs
-echo "🔄 Enabling necessary APIs..."
-gcloud services enable artifactregistry.googleapis.com run.googleapis.com
+log "Using project: ${PROJECT_ID}"
 
-# 3. Create Artifact Repository (if not exists)
-if ! gcloud artifacts repositories describe $REPO_NAME --location=$REGION &>/dev/null; then
-    echo "📦 Creating Artifact Registry repository..."
-    gcloud artifacts repositories create $REPO_NAME \
+log "Enabling required Google Cloud APIs..."
+gcloud services enable \
+    artifactregistry.googleapis.com \
+    run.googleapis.com
+
+if ! gcloud artifacts repositories describe "$REPOSITORY" \
+    --location="$REGION" >/dev/null 2>&1; then
+
+    log "Creating Artifact Registry repository..."
+    gcloud artifacts repositories create "$REPOSITORY" \
         --repository-format=docker \
-        --location=$REGION \
-        --description="Docker repository for Hospital Project"
+        --location="$REGION" \
+        --description="Docker images for Hospital application"
 fi
 
-# 4. Build & Push Backend
-SERVER_IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/backend:latest"
-echo "🐳 Building Backend Image..."
-# Use --platform linux/amd64 for compatibility with Cloud Run if building on M1/M2 Mac
-docker build --platform linux/amd64 --build-arg DATABASE_URL="postgresql://postgres:postgres@localhost:5432/hospital" -f Dockerfile.backend -t $SERVER_IMAGE .
-echo "🚀 Pushing Backend..."
-docker push $SERVER_IMAGE
+BACKEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/backend:latest"
+FRONTEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/frontend:latest"
 
-# 5. Build & Push Frontend
-CLIENT_IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/frontend:latest"
-echo "🐳 Building Frontend Image..."
-docker build --platform linux/amd64 -f Dockerfile.frontend -t $CLIENT_IMAGE .
-echo "🚀 Pushing Frontend..."
-docker push $CLIENT_IMAGE
+log "Building backend image..."
+docker build \
+    --platform linux/amd64 \
+    --build-arg DATABASE_URL="postgresql://postgres:postgres@localhost:5432/hospital" \
+    -f Dockerfile.backend \
+    -t "$BACKEND_IMAGE" .
 
-# 6. Deploy Backend
-echo "☁️ Deploying Backend to Cloud Run..."
-gcloud run deploy hospital-backend \
-    --image $SERVER_IMAGE \
-    --region $REGION \
-    --platform managed \
+log "Pushing backend image..."
+docker push "$BACKEND_IMAGE"
+
+log "Building frontend image..."
+docker build \
+    --platform linux/amd64 \
+    -f Dockerfile.frontend \
+    -t "$FRONTEND_IMAGE" .
+
+log "Pushing frontend image..."
+docker push "$FRONTEND_IMAGE"
+
+log "Deploying backend service..."
+
+gcloud run deploy "$BACKEND_SERVICE" \
+    --image="$BACKEND_IMAGE" \
+    --region="$REGION" \
+    --platform=managed \
     --allow-unauthenticated \
-    --memory 1Gi \
-    --timeout 300 \
-    --set-env-vars DATABASE_URL="postgresql://user:pass@localhost:5432/hospital_prod",JWT_SECRET="CHANGE_ME_IN_PROD"
+    --memory=1Gi \
+    --timeout=300 \
+    --set-env-vars \
+        DATABASE_URL="postgresql://user:pass@localhost:5432/hospital_prod",\
+JWT_SECRET="CHANGE_ME_IN_PROD"
 
-# Get Backend URL
-BACKEND_URL=$(gcloud run services describe hospital-backend --platform managed --region $REGION --format 'value(status.url)')
-echo "✅ Backend deployed at: $BACKEND_URL"
+BACKEND_URL="$(
+    gcloud run services describe "$BACKEND_SERVICE" \
+        --region="$REGION" \
+        --platform=managed \
+        --format='value(status.url)'
+)"
 
-# 7. Deploy Frontend
-echo "☁️ Deploying Frontend to Cloud Run..."
-gcloud run deploy hospital-frontend \
-    --image $CLIENT_IMAGE \
-    --region $REGION \
-    --platform managed \
+log "Deploying frontend service..."
+
+gcloud run deploy "$FRONTEND_SERVICE" \
+    --image="$FRONTEND_IMAGE" \
+    --region="$REGION" \
+    --platform=managed \
     --allow-unauthenticated \
     --set-env-vars NEXT_PUBLIC_API_URL="$BACKEND_URL"
 
-FRONTEND_URL=$(gcloud run services describe hospital-frontend --platform managed --region $REGION --format 'value(status.url)')
-echo "🎉 Deployment Complete!"
-echo "➡️ Frontend: $FRONTEND_URL"
-echo "➡️ Backend:  $BACKEND_URL"
-echo ""
-echo "⚠️  IMPORTANT: Go to Cloud Console and update the DATABASE_URL environment variable for the backend service!"
+FRONTEND_URL="$(
+    gcloud run services describe "$FRONTEND_SERVICE" \
+        --region="$REGION" \
+        --platform=managed \
+        --format='value(status.url)'
+)"
+
+echo
+echo "Deployment completed successfully."
+echo
+echo "Frontend : $FRONTEND_URL"
+echo "Backend  : $BACKEND_URL"
+echo
+echo "Remember to update the production DATABASE_URL in Cloud Run."
