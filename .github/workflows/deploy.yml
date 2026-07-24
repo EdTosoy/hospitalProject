@@ -1,0 +1,54 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - devops
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Backend Image
+        run: |
+          docker build \
+            --build-arg DATABASE_URL="postgresql://user:password@localhost:5432/db" \
+            -t ${{ vars.BACKEND_ECR }}:${{ github.sha }} \
+            -f Dockerfile.backend \
+            .
+
+      - name: Push Backend Image
+        run: |
+          docker push \
+            ${{ vars.BACKEND_ECR }}:${{ github.sha }}
+
+      - name: Build Frontend Image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=http://${{ vars.EC2_PUBLIC_IP }}:8080 \
+            -t ${{ vars.FRONTEND_ECR }}:${{ github.sha }} \
+            -f Dockerfile.frontend \
+            .
+
+      - name: Push Frontend Image
+        run: |
+          docker push \
+            ${{ vars.FRONTEND_ECR }}:${{ github.sha }}
