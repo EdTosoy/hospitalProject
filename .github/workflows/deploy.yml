@@ -52,3 +52,19 @@ jobs:
         run: |
           docker push \
             ${{ vars.FRONTEND_ECR }}:${{ github.sha }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ vars.EC2_PUBLIC_IP }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            kubectl set image deployment/backend backend=${{ vars.BACKEND_ECR }}:${{ github.sha }}
+            kubectl set image deployment/frontend frontend=${{ vars.FRONTEND_ECR }}:${{ github.sha }}
+            kubectl rollout status deployment/backend --timeout=120s
+            kubectl rollout status deployment/frontend --timeout=120s
