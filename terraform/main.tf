@@ -115,6 +115,14 @@ resource "aws_vpc_security_group_ingress_rule" "main-frontend-nodeport" {
   to_port     = 30081
 }
 
+resource "aws_vpc_security_group_ingress_rule" "main-grafana-nodeport" {
+  security_group_id = aws_security_group.main.id
+  cidr_ipv4         = "0.0.0.0/0"
+  from_port         = 30921
+  ip_protocol       = "tcp"
+  to_port           = 30921
+}
+
 resource "aws_vpc_security_group_egress_rule" "main" {
   security_group_id = aws_security_group.main.id
 
@@ -129,7 +137,7 @@ resource "aws_key_pair" "main" {
 
 resource "aws_instance" "main" {
   ami                         = data.aws_ami.ubuntu.id
-  instance_type               = "t3.small"
+  instance_type               = "t3.medium"
   subnet_id                   = aws_subnet.main.id
   vpc_security_group_ids      = [aws_security_group.main.id]
   key_name                    = aws_key_pair.main.key_name
@@ -168,6 +176,7 @@ resource "aws_iam_openid_connect_provider" "github" {
     "1c58a3a8518e8759bf075b76b750d4f2df264fcd"
   ]
 }
+
 
 resource "aws_iam_role" "github_actions" {
   name = "github-actions-ecr-push"

@@ -1,0 +1,21 @@
+prometheus:
+  prometheusSpec:
+    resources:
+      requests:
+        memory: 400Mi
+      limits:
+        memory: 600Mi
+    retention: 6h
+
+grafana:
+  resources:
+    requests:
+      memory: 200Mi
+    limits:
+      memory: 500Mi
+  service:
+    type: NodePort
+    nodePort: 30921
+
+alertmanager:
+  enabled: false
