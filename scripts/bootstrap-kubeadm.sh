@@ -1,4 +1,12 @@
 #!/bin/bash
+# Required environment variables before running this script:
+#   AWS_ACCOUNT_ID,
+#   AWS_REGION
+#   POSTGRES_USER, 
+#   POSTGRES_PASSWORD,
+#   POSTGRES_DB
+#   JWT_SECRET
+
 set -euo pipefail
 
 echo "Disabling swap.."
@@ -58,7 +66,7 @@ echo "Installing AWS CLI..."
 sudo apt install -y unzip
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip -o awscliv2.zip
-sudo ./aws/install --update
+sudo ./aws/install
 
 echo "Bootstrap complete. Waiting for node Ready..."
 kubectl wait --for=condition=Ready node --all --timeout=120s
