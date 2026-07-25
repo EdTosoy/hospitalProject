@@ -96,6 +96,15 @@ resource "aws_vpc_security_group_ingress_rule" "main-frontend" {
   to_port     = 3000
 }
 
+resource "aws_vpc_security_group_ingress_rule" "main-backend-nodeport" {
+  security_group_id = aws_security_group.main.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 30080
+  ip_protocol = "tcp"
+  to_port     = 30080
+}
+
 resource "aws_vpc_security_group_egress_rule" "main" {
   security_group_id = aws_security_group.main.id
 
@@ -109,13 +118,13 @@ resource "aws_key_pair" "main" {
 }
 
 resource "aws_instance" "main" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.small"
-  subnet_id     = aws_subnet.main.id
-  vpc_security_group_ids = [aws_security_group.main.id]
-  key_name     = aws_key_pair.main.key_name
-  
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t3.small"
+  subnet_id                   = aws_subnet.main.id
+  vpc_security_group_ids      = [aws_security_group.main.id]
+  key_name                    = aws_key_pair.main.key_name
   associate_public_ip_address = true
+  iam_instance_profile        = aws_iam_instance_profile.ec2_ecr_pull.name
 
   root_block_device {
     volume_size = 30
@@ -207,4 +216,56 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
       }
     ]
   })
+}
+
+resource "aws_iam_role" "ec2_ecr_pull" {
+  name = "ec2-ecr-pull"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "ec2_ecr_pull" {
+  name = "ecr-pull-policy"
+  role = aws_iam_role.ec2_ecr_pull.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage"
+        ]
+        Resource = [
+          aws_ecr_repository.backend.arn,
+          aws_ecr_repository.frontend.arn
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_instance_profile" "ec2_ecr_pull" {
+  name = "ec2-ecr-pull-profile"
+  role = aws_iam_role.ec2_ecr_pull.name
 }
