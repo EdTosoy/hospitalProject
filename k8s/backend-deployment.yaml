@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      imagePullSecrets:
+        - name: ecr-pull-secret  
+      containers:
+        - name: backend
+          image: 163596511125.dkr.ecr.us-east-1.amazonaws.com/hospital-project-backend:ec21983e4f8532145a2430d9bb2d8deaba8ea611
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: backend-secret
+          env:
+            - name: PORT
+              value: "8080"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5

@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      imagePullSecrets:
+        - name: ecr-pull-secret  
+      containers:
+        - name: frontend
+          image: 163596511125.dkr.ecr.us-east-1.amazonaws.com/hospital-project-frontend:060fdfc31513dbf571086ccb8247dd3b9fd1d5a0
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
