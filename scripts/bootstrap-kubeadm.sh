@@ -1,19 +1,14 @@
-#!/bin/bash
-# Required environment variables before running this script:
-#   AWS_ACCOUNT_ID,
-#   AWS_REGION
-#   POSTGRES_USER, 
-#   POSTGRES_PASSWORD,
-#   POSTGRES_DB
-#   JWT_SECRET
-
+#!/usr/bin/env bash
 set -euo pipefail
 
+YELLOW='\033[1;33m'
+NO_COLOR='\033[0m'
+
 log() {
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+  echo -e "${YELLOW}[$(date '+%Y-%m-%d %H:%M:%S')]${NO_COLOR} $1"
 }
 
-log "Disabling swap.."
+log "Disabling swap..."
 sudo swapoff -a
 sudo sed -i '/swap/d' /etc/fstab
 
