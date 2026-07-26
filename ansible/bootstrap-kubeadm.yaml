@@ -1,0 +1,35 @@
+- name: Bootstrap kubeadm cluster
+  hosts: k8s_node
+  become: true
+  tasks:
+    - name: Disable swap
+      command: swapoff -a
+      changed_when: true
+
+    - name: Load overlay kernel module
+      community.general.modprobe:
+        name: overlay
+        state: present
+
+    - name: Load br_netfilter kernel module
+      community.general.modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: Set sysctl bridge-nf-call-iptables
+      ansible.posix.sysctl:
+        name: net.bridge.bridge-nf-call-iptables
+        value: "1"
+        sysctl_set: true
+
+    - name: Set sysctl bridge-nf-call-ip6tables
+      ansible.posix.sysctl:
+        name: net.bridge.bridge-nf-call-ip6tables
+        value: "1"
+        sysctl_set: true
+
+    - name: Set sysctl ip_forward
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        sysctl_set: true
