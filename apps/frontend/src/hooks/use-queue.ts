@@ -1,9 +1,11 @@
-import { apiAuthFetch } from "@/lib/api";
-import { QueueEntry } from "@hospital/shared";
+import type { QueueEntry } from "@hospital/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiAuthFetch } from "@/lib/api";
 
 export function useQueue() {
   return useQuery({
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
     queryKey: ["queue"],
     queryFn: () => apiAuthFetch<QueueEntry[]>("/queue"),
   });
@@ -36,7 +38,7 @@ export function useCallNext() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () =>
-      apiAuthFetch<QueueEntry>("/queue/call-next", {
+      apiAuthFetch<QueueEntry | null>("/queue/call-next", {
         method: "POST",
       }),
     onSuccess: () => {

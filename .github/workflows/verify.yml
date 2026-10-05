@@ -1,0 +1,44 @@
+name: Verify local baseline
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: hospital
+          POSTGRES_PASSWORD: ci-test-only
+          POSTGRES_DB: hospital_test
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U hospital -d hospital_test" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://hospital:ci-test-only@localhost:5432/hospital_test
+      JWT_SECRET: ci-test-only-secret-at-least-32-characters
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm --filter backend db:migrate
+      - run: pnpm --filter backend test:e2e
+      - run: pnpm build
+      - run: pnpm --filter frontend exec playwright install --with-deps chromium
+      - run: pnpm --filter frontend test:e2e
+      - run: docker build -f Dockerfile.backend -t hospital-backend:ci .
+      - run: docker build -f Dockerfile.frontend -t hospital-frontend:ci .

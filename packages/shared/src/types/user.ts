@@ -9,7 +9,7 @@ export type Role =
 export interface User {
   id: string;
   email: string;
-  name?: string;
+  name?: string | null;
   role: Role;
   createdAt?: string;
   updatedAt?: string;

@@ -13,7 +13,7 @@ export interface QueueEntry {
   patient?: Patient;
   queueNumber: number;
   status: QueueStatus;
-  notes?: string;
+  notes?: string | null;
   createdAt: string;
-  calledAt?: string;
+  calledAt?: string | null;
 }

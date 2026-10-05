@@ -1,16 +1,15 @@
 "use client";
 
-import * as React from "react";
-import { useAuthStore } from "@/stores/auth-store";
 import {
   CalendarDays,
+  CreditCard,
   GalleryVerticalEnd,
   Home,
   ListOrdered,
   User,
   Users,
 } from "lucide-react";
-
+import type * as React from "react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
@@ -21,26 +20,39 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { roleLabels } from "@/components/workspace-header";
+import { useAuthStore } from "@/stores/auth-store";
 
 const teams = [
   {
-    name: "Pulse Hospital",
+    name: "Pulse Medical",
     logo: GalleryVerticalEnd,
-    plan: "Enterprise",
+    plan: "Care, connected",
   },
 ];
 
-function getNavItem(role: string | undefined) {
+function getNavItem(
+  role: string | undefined,
+): React.ComponentProps<typeof NavMain>["items"] {
   const common = [
     {
-      title: "Dashboard",
+      title: "Overview",
       url: "/dashboard",
       icon: Home,
       isActive: true,
     },
   ];
 
+  const billing = {
+    title: "Billing",
+    url: "/dashboard/billing",
+    icon: CreditCard,
+  };
   switch (role) {
+    case "BILLING":
+      return [...common, billing];
+    case "ADMIN":
+      return [...getNavItem("FRONT_DESK"), billing];
     case "PATIENT":
       return [
         ...common,
@@ -103,12 +115,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const sidebarUser = {
     name: user?.name || user?.role || "User",
     email: user?.email || "guest@pulse.hospital",
-    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || user?.email || "Guest")}&background=01bfa5&color=fff`,
+    avatar: "",
   };
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={teams} />
+        <TeamSwitcher
+          teams={teams.map((team) => ({
+            ...team,
+            plan: roleLabels[user?.role || ""] || team.plan,
+          }))}
+        />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navItems} />

@@ -12,11 +12,19 @@ export interface Appointment {
   id: string;
   patientId: string;
   patient?: Patient;
-  doctorId?: string;
-  doctor?: User;
+  doctorId?: string | null;
+  doctor?: User | null;
   dateTime: string;
   reason: string;
   status: AppointmentStatus;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface CreateAppointmentInput {
+  patientId: string;
+  doctorId?: string;
+  dateTime: string;
+  reason: string;
+  status?: "PENDING" | "CONFIRMED";
 }

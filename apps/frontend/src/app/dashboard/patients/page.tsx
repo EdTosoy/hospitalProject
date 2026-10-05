@@ -1,125 +1,175 @@
 "use client";
-
-import { AddPatientModal } from "@/components/add-patient-modal";
-import { usePatients } from "@/hooks/use-patients";
-import { useAddToQueue } from "@/hooks/use-queue";
-import { useAuthStore } from "@/stores/auth-store";
-import { Calendar, FileText, MapPin, Phone, Plus, User } from "lucide-react";
+import { FileText, Plus, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AddPatientModal } from "@/components/add-patient-modal";
+import {
+  EmptyState,
+  PageHeader,
+  QueryState,
+  RecordToolbar,
+} from "@/components/care-ui";
+import { usePatients } from "@/hooks/use-patients";
+import { useAddToQueue } from "@/hooks/use-queue";
+import { useAuthStore } from "@/stores/auth-store";
 
 export default function PatientsPage() {
-  const { data: patients, isLoading, isError } = usePatients();
+  const patients = usePatients();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [addingPatientId, setAddingPatientId] = useState<string | null>(null);
-
-  const addToQueue = useAddToQueue();
+  const [query, setQuery] = useState("");
+  const add = useAddToQueue();
   const user = useAuthStore((state) => state.user);
-
-  if (isLoading) return <div className="p-8">Loading patients...</div>;
-  if (isError) return <div className="p-8 text-red-500">Failed to load.</div>;
-
+  const filtered = (patients.data || [])
+    .filter((item) =>
+      `${item.firstName} ${item.lastName} ${item.phone}`
+        .toLowerCase()
+        .includes(query.toLowerCase()),
+    )
+    .sort((a, b) => a.lastName.localeCompare(b.lastName));
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Patients</h1>
-        <p className="text-muted-foreground">
-          {patients?.length || 0} registered
-        </p>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Patient
-        </button>
-      </div>
-
-      {patients?.length === 0 && (
-        <div className="text-center py-12 border rounded-lg text-muted-foreground">
-          No patients registered yet
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {patients?.map((patient) => (
-          <div
-            key={patient.id}
-            className="border p-4 rounded-lg flex items-center justify-between hover:bg-accent/50 transition-colors"
+    <div className="workspace">
+      <PageHeader
+        title="Patients"
+        eyebrow="Patient directory"
+        description="Find a registered patient, coordinate their arrival, or open a consultation record."
+        action={
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => setIsModalOpen(true)}
           >
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">
-                    {patient.firstName} {patient.lastName}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {patient.gender}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="h-4 w-4" />
-                <span className="text-sm">{patient.phone}</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span className="text-sm">
-                  {new Date(patient.dob).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-
-            {patient.address && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span className="text-sm truncate max-w-[200px]">
-                  {patient.address}
-                </span>
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  setAddingPatientId(patient.id);
-                  addToQueue.mutate(
-                    { patientId: patient.id },
-                    {
-                      onSuccess: () => {
-                        toast.success(`${patient.firstName} added to queue!`);
-                        setAddingPatientId(null);
-                      },
-                      onError: (error) => {
-                        toast.error(error.message || "Failed to add to queue");
-                        setAddingPatientId(null);
-                      },
-                    }
-                  );
-                }}
-                disabled={addingPatientId === patient.id}
-                className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 transition-colors"
+            <Plus className="size-4" />
+            Add Patient
+          </button>
+        }
+      />
+      {patients.isLoading ? (
+        <QueryState loading message="Loading patients…" />
+      ) : patients.isError ? (
+        <QueryState
+          message="Unable to load patients."
+          retry={() => {
+            void patients.refetch();
+          }}
+        />
+      ) : (
+        <>
+          <RecordToolbar
+            label="Search patient name or phone"
+            query={query}
+            onQueryChange={setQuery}
+            count={filtered.length}
+          />
+          {add.isError && (
+            <p role="alert" className="panel p-4 text-sm text-destructive">
+              {add.error.message}
+            </p>
+          )}
+          {!filtered.length && (
+            <EmptyState
+              title={
+                patients.data?.length
+                  ? "No matching patients"
+                  : "No patients registered yet"
+              }
+              description={
+                patients.data?.length
+                  ? "Try a different name or phone number."
+                  : "Register a walk-in patient to begin their visit."
+              }
+            />
+          )}
+          <div className="space-y-3">
+            {filtered.map((item) => (
+              <article
+                key={item.id}
+                data-testid="patient-record"
+                className="panel p-5"
               >
-                {addingPatientId === patient.id ? "Adding..." : "Add to Queue"}
-              </button>
-              {(user?.role === "DOCTOR" || user?.role === "NURSE") && (
-                <Link
-                  href={`/dashboard/consult/${patient.id}`}
-                  className="px-3 py-1 text-sm bg-emerald-500 text-white rounded hover:bg-emerald-600 transition-colors flex items-center gap-1"
-                >
-                  <FileText className="w-4 h-4" />
-                  Consult
-                </Link>
-              )}
-            </div>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span
+                      className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary"
+                      aria-hidden="true"
+                    >
+                      <UserRound className="size-5" />
+                    </span>
+                    <div>
+                      <h2 className="font-semibold">
+                        {item.firstName} {item.lastName}
+                      </h2>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Patient record · {item.id.slice(-8)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      disabled={add.isPending}
+                      onClick={() =>
+                        add.mutate(
+                          { patientId: item.id },
+                          {
+                            onSuccess: () =>
+                              toast.success(`${item.firstName} added to queue`),
+                          },
+                        )
+                      }
+                    >
+                      {add.isPending && add.variables?.patientId === item.id
+                        ? "Adding…"
+                        : "Add to Queue"}
+                    </button>
+                    {["DOCTOR", "NURSE"].includes(user?.role || "") && (
+                      <Link
+                        href={`/dashboard/consult/${item.id}`}
+                        className="btn-primary"
+                      >
+                        <FileText className="size-4" />
+                        Consult
+                      </Link>
+                    )}
+                  </div>
+                </div>
+                <details className="mt-4 border-t pt-3">
+                  <summary className="w-fit cursor-pointer text-xs font-medium text-muted-foreground">
+                    View contact and demographic details
+                  </summary>
+                  <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Phone</dt>
+                      <dd className="mt-1">{item.phone}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">
+                        Date of birth
+                      </dt>
+                      <dd className="mt-1">
+                        {new Date(item.dob).toLocaleDateString()}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Gender</dt>
+                      <dd className="mt-1 capitalize">
+                        {item.gender.toLowerCase()}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Address</dt>
+                      <dd className="mt-1 break-words">
+                        {item.address || "Not provided"}
+                      </dd>
+                    </div>
+                  </dl>
+                </details>
+              </article>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
       <AddPatientModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

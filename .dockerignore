@@ -4,3 +4,15 @@ dist/
 .git/
 .turbo/
 node_modules
+**/node_modules/
+**/.env*
+**/.next/
+**/dist/
+**/coverage/
+**/.terraform/
+**/*.tfstate*
+**/test-results/
+**/playwright-report/
+.aws/
+.codex/
+.agents/

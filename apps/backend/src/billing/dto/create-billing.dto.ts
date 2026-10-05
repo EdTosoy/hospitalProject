@@ -1,13 +1,22 @@
-import { BillingStatus } from '@prisma/client';
+import { Transform } from 'class-transformer';
+import { BillingStatus } from '../../database/schema';
 import {
   IsEnum,
-  IsInt,
+  IsNumber,
+  Min,
+  Max,
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateBillingDto {
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsIn(['PHP'])
+  currency?: 'PHP';
+
   @IsNotEmpty()
   @IsString()
   patientId!: string;
@@ -17,14 +26,17 @@ export class CreateBillingDto {
   appointmentId?: string;
 
   @IsNotEmpty()
-  @IsInt()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Max(9999999999.99)
+  @Min(0)
   amount!: number;
 
   @IsNotEmpty()
   @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   description!: string;
 
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsEnum(BillingStatus)
   status?: BillingStatus;
 }

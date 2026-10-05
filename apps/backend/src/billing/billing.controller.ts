@@ -1,5 +1,11 @@
+import type { AuthenticatedRequest } from '../database/access';
+import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
+import { RolesGuard } from '../auth/roles/roles.guard';
+import { Roles } from '../auth/roles/roles.decorators';
 import {
   Controller,
+  Request,
+  UseGuards,
   Get,
   Post,
   Body,
@@ -13,13 +19,18 @@ import { UpdateBillingDto } from './dto/update-billing.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiBearerAuth()
+@Roles('ADMIN', 'BILLING')
 @Controller('billing')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class BillingController {
   constructor(private readonly billingService: BillingService) {}
 
   @Post()
-  create(@Body() createBillingDto: CreateBillingDto) {
-    return this.billingService.create(createBillingDto);
+  create(
+    @Request() req: AuthenticatedRequest,
+    @Body() createBillingDto: CreateBillingDto,
+  ) {
+    return this.billingService.create(createBillingDto, req.user);
   }
 
   @Get()
@@ -33,12 +44,16 @@ export class BillingController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBillingDto: UpdateBillingDto) {
-    return this.billingService.update(id, updateBillingDto);
+  update(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() updateBillingDto: UpdateBillingDto,
+  ) {
+    return this.billingService.update(id, updateBillingDto, req.user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.billingService.remove(id);
+  remove(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.billingService.remove(id, req.user);
   }
 }

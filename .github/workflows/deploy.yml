@@ -1,9 +1,12 @@
 name: Build and Push Docker Images
 
 on:
-  push:
-    branches:
-      - devops
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy the built images to the configured EC2 cluster"
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -30,7 +33,6 @@ jobs:
       - name: Build Backend Image
         run: |
           docker build \
-            --build-arg DATABASE_URL="postgresql://user:password@localhost:5432/db" \
             -t ${{ vars.BACKEND_ECR }}:${{ github.sha }} \
             -f Dockerfile.backend \
             .
@@ -54,6 +56,8 @@ jobs:
             ${{ vars.FRONTEND_ECR }}:${{ github.sha }}
 
   deploy:
+    if: ${{ inputs.deploy }}
+    environment: production
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -64,7 +68,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
-            kubectl set image deployment/backend backend=${{ vars.BACKEND_ECR }}:${{ github.sha }}
+            kubectl set image deployment/backend backend=${{ vars.BACKEND_ECR }}:${{ github.sha }} db-migrate=${{ vars.BACKEND_ECR }}:${{ github.sha }}
             kubectl set image deployment/frontend frontend=${{ vars.FRONTEND_ECR }}:${{ github.sha }}
             kubectl rollout status deployment/backend --timeout=120s
             kubectl rollout status deployment/frontend --timeout=120s

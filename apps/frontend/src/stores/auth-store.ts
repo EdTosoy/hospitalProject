@@ -1,28 +1,18 @@
-import { User } from "@hospital/shared";
+import type { User } from "@hospital/shared";
 import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
 
 interface AuthState {
-  token: string | null;
   user: User | null;
-  setAuth: (token: string, user: User) => void;
+  setAuth: (user: User) => void;
   logout: () => void;
   isAuthenticated: () => boolean;
   setUser: (user: User) => void;
 }
-
-export const useAuthStore = create<AuthState>()(
-  devtools(
-    persist(
-      (set, get) => ({
-        token: null,
-        user: null,
-        setAuth: (token, user) => set({ token, user }),
-        logout: () => set({ token: null, user: null }),
-        isAuthenticated: () => get().token !== null,
-        setUser: (user) => set({ user }),
-      }),
-      { name: "auth-storage" }
-    )
-  )
-);
+// Credentials live exclusively in the server's HttpOnly cookie. No persisted auth data.
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  setAuth: (user) => set({ user }),
+  logout: () => set({ user: null }),
+  isAuthenticated: () => get().user !== null,
+  setUser: (user) => set({ user }),
+}));

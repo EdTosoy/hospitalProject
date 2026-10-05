@@ -1,9 +1,15 @@
-import { apiAuthFetch } from "@/lib/api";
-import { Appointment, AppointmentStatus } from "@hospital/shared";
+import type {
+  Appointment,
+  AppointmentStatus,
+  CreateAppointmentInput,
+} from "@hospital/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiAuthFetch } from "@/lib/api";
 
 export function useAppointments() {
   return useQuery({
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
     queryKey: ["appointments"],
     queryFn: () => apiAuthFetch<Appointment[]>("/appointments"),
   });
@@ -13,7 +19,7 @@ export function useCreateAppointment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Omit<Appointment, "id">) =>
+    mutationFn: (data: CreateAppointmentInput) =>
       apiAuthFetch<Appointment>("/appointments", {
         method: "POST",
         body: JSON.stringify(data),

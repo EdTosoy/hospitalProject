@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Validate operator configuration before making host or cluster changes.
+: "${AWS_ACCOUNT_ID:?Set AWS_ACCOUNT_ID}" "${AWS_REGION:?Set AWS_REGION}"
+: "${POSTGRES_USER:?Set POSTGRES_USER}" "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}" "${POSTGRES_DB:?Set POSTGRES_DB}"
+: "${JWT_SECRET:?Set JWT_SECRET}" "${CORS_ORIGIN:?Set CORS_ORIGIN to the browser frontend origin}"
+
 YELLOW='\033[1;33m'
 NO_COLOR='\033[0m'
 
@@ -88,5 +93,6 @@ kubectl create secret generic postgres-secret \
 log "Creating backend-secret..."
 kubectl create secret generic backend-secret \
   --from-literal=JWT_SECRET="${JWT_SECRET}" \
-  --from-literal=DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public" \
+  --from-literal=CORS_ORIGIN="${CORS_ORIGIN}" \
+  --from-literal=DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}" \
   --dry-run=client -o yaml | kubectl apply -f -

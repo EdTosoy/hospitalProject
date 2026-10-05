@@ -1,5 +1,5 @@
-import { apiAuthFetch } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+import { apiAuthFetch } from "@/lib/api";
 
 interface Doctor {
   id: string;

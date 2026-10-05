@@ -1,8 +1,9 @@
 "use client";
 
 import { useAuthStore } from "@/stores/auth-store";
-import PatientDashboardPage from "./patient/page";
+import BillingPage from "./billing/page";
 import DoctorDashboardPage from "./doctor/page";
+import PatientDashboardPage from "./patient/page";
 import StaffDashboardPage from "./staff/page";
 
 export default function DashboardPage() {
@@ -17,6 +18,8 @@ export default function DashboardPage() {
   }
 
   switch (user.role) {
+    case "BILLING":
+      return <BillingPage />;
     case "PATIENT":
       return <PatientDashboardPage />;
     case "DOCTOR":

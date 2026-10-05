@@ -1,13 +1,23 @@
 import { useAuthStore } from "@/stores/auth-store";
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 export async function apiFetch<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<T> {
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...options?.headers,
@@ -15,8 +25,15 @@ export async function apiFetch<T>(
   });
 
   if (!res.ok) {
-    const error = await res.json().catch(() => {});
-    throw new Error(error.message || "API request failed");
+    const error = await res.json().catch(() => null);
+    if (res.status === 401) useAuthStore.getState().logout();
+    const message = error?.message;
+    throw new ApiError(
+      Array.isArray(message)
+        ? message.join(". ")
+        : message || `API request failed (${res.status})`,
+      res.status,
+    );
   }
 
   return res.json();
@@ -24,15 +41,7 @@ export async function apiFetch<T>(
 
 export async function apiAuthFetch<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<T> {
-  const token = useAuthStore.getState().token;
-
-  return apiFetch<T>(endpoint, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...options?.headers,
-    },
-  });
+  return apiFetch<T>(endpoint, options);
 }

@@ -2,7 +2,8 @@
   "info": {
     "_postman_id": "8f66a8f7-a29b-4686-8962-8a999fd59d62",
     "name": "Hospital Project API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Pulse Medical API. Use a dedicated local database and the example environment. Login saves the bearer token locally. Public registration always creates a PATIENT; staff operations require the matching seeded role. Replace resource IDs and appointment_date before sending requests."
   },
   "item": [
     {
@@ -19,7 +20,9 @@
             ""
           ]
         },
-        "description": "Root endpoint"
+        "auth": {
+          "type": "noauth"
+        }
       }
     },
     {
@@ -35,7 +38,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"Portfolio Patient\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -52,7 +55,9 @@
             "register"
           ]
         },
-        "description": "Register a new user"
+        "auth": {
+          "type": "noauth"
+        }
       }
     },
     {
@@ -68,7 +73,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -85,8 +90,23 @@
             "login"
           ]
         },
-        "description": "Login user"
-      }
+        "auth": {
+          "type": "noauth"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "  pm.environment.set(\"access_token\", pm.response.json().access_token);",
+              "}"
+            ]
+          }
+        }
+      ]
     },
     {
       "name": "POST /users",
@@ -101,7 +121,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"email\": \"staff@example.test\",\n  \"password\": \"{{password}}\",\n  \"name\": \"Staff User\",\n  \"role\": \"FRONT_DESK\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -116,8 +136,7 @@
           "path": [
             "users"
           ]
-        },
-        "description": "Create user"
+        }
       }
     },
     {
@@ -134,8 +153,7 @@
             "users",
             "doctors"
           ]
-        },
-        "description": "List doctors"
+        }
       }
     },
     {
@@ -151,31 +169,7 @@
           "path": [
             "users"
           ]
-        },
-        "description": "List users"
-      }
-    },
-    {
-      "name": "GET /users/:id",
-      "id": "227b673f-2db9-4560-bf0e-36ff8d59bbef",
-      "request": {
-        "method": "GET",
-        "url": {
-          "raw": "{{base_url}}/users/:id",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "users",
-            ":id"
-          ],
-          "variable": [
-            {
-              "key": "id"
-            }
-          ]
-        },
-        "description": "Get user by id"
+        }
       }
     },
     {
@@ -191,7 +185,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"name\": \"Updated Name\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -209,11 +203,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{user_id}}"
             }
           ]
-        },
-        "description": "Update user by id"
+        }
       }
     },
     {
@@ -232,11 +226,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{user_id}}"
             }
           ]
-        },
-        "description": "Delete user by id"
+        }
       }
     },
     {
@@ -252,7 +246,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"firstName\": \"Portfolio\",\n  \"lastName\": \"Patient\",\n  \"dob\": \"1990-01-01\",\n  \"gender\": \"OTHER\",\n  \"phone\": \"09123456789\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -267,8 +261,7 @@
           "path": [
             "patients"
           ]
-        },
-        "description": "Create patient (auth may be required)"
+        }
       }
     },
     {
@@ -284,8 +277,7 @@
           "path": [
             "patients"
           ]
-        },
-        "description": "List patients"
+        }
       }
     },
     {
@@ -304,11 +296,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{patient_id}}"
             }
           ]
-        },
-        "description": "Get patient by id"
+        }
       }
     },
     {
@@ -324,7 +316,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"phone\": \"09123456789\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -342,11 +334,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{patient_id}}"
             }
           ]
-        },
-        "description": "Update patient by id"
+        }
       }
     },
     {
@@ -365,11 +357,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{patient_id}}"
             }
           ]
-        },
-        "description": "Delete patient by id"
+        }
       }
     },
     {
@@ -385,7 +377,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"patientId\": \"{{patient_id}}\",\n  \"doctorId\": \"{{doctor_id}}\",\n  \"dateTime\": \"{{appointment_date}}\",\n  \"reason\": \"Portfolio consultation\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -400,8 +392,7 @@
           "path": [
             "appointments"
           ]
-        },
-        "description": "Create appointment (auth may be required)"
+        }
       }
     },
     {
@@ -417,8 +408,7 @@
           "path": [
             "appointments"
           ]
-        },
-        "description": "List appointments"
+        }
       }
     },
     {
@@ -437,11 +427,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{appointment_id}}"
             }
           ]
-        },
-        "description": "Get appointment by id"
+        }
       }
     },
     {
@@ -457,7 +447,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"status\": \"CONFIRMED\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -475,11 +465,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{appointment_id}}"
             }
           ]
-        },
-        "description": "Update appointment by id"
+        }
       }
     },
     {
@@ -498,11 +488,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{appointment_id}}"
             }
           ]
-        },
-        "description": "Delete appointment by id"
+        }
       }
     },
     {
@@ -518,7 +508,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"patientId\": \"{{patient_id}}\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -533,8 +523,7 @@
           "path": [
             "queue"
           ]
-        },
-        "description": "Create queue item"
+        }
       }
     },
     {
@@ -550,8 +539,7 @@
           "path": [
             "queue"
           ]
-        },
-        "description": "List queue items"
+        }
       }
     },
     {
@@ -570,11 +558,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{queue_id}}"
             }
           ]
-        },
-        "description": "Get queue item by id"
+        }
       }
     },
     {
@@ -590,7 +578,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"status\": \"NO_SHOW\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -608,11 +596,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{queue_id}}"
             }
           ]
-        },
-        "description": "Update queue item by id"
+        }
       }
     },
     {
@@ -631,11 +619,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{queue_id}}"
             }
           ]
-        },
-        "description": "Delete queue item by id"
+        }
       }
     },
     {
@@ -651,7 +639,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"patientId\": \"{{patient_id}}\",\n  \"amount\": 123.45,\n  \"description\": \"Consultation\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -666,8 +654,7 @@
           "path": [
             "billing"
           ]
-        },
-        "description": "Create billing record (auth may be required)"
+        }
       }
     },
     {
@@ -683,8 +670,7 @@
           "path": [
             "billing"
           ]
-        },
-        "description": "List billing records"
+        }
       }
     },
     {
@@ -703,11 +689,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{billing_id}}"
             }
           ]
-        },
-        "description": "Get billing record by id"
+        }
       }
     },
     {
@@ -723,7 +709,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{}",
+          "raw": "{\n  \"status\": \"PAID\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -741,11 +727,11 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{billing_id}}"
             }
           ]
-        },
-        "description": "Update billing record by id"
+        }
       }
     },
     {
@@ -764,12 +750,290 @@
           ],
           "variable": [
             {
-              "key": "id"
+              "key": "id",
+              "value": "{{billing_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /health",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "POST /patients/register",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/patients/register",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "patients",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"firstName\": \"Walkin\",\n  \"lastName\": \"Patient\",\n  \"dob\": \"1990-01-01\",\n  \"gender\": \"OTHER\",\n  \"phone\": \"09123456789\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "POST /queue/add-to-queue",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/queue/add-to-queue",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "queue",
+            "add-to-queue"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"patientId\": \"{{patient_id}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "POST /queue/call-next",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/queue/call-next",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "queue",
+            "call-next"
+          ]
+        }
+      }
+    },
+    {
+      "name": "PATCH /queue/:id/complete",
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/queue/:id/complete",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "queue",
+            ":id",
+            "complete"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "{{queue_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "POST /consult-notes",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{base_url}}/consult-notes",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "consult-notes"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"patientId\": \"{{patient_id}}\",\n  \"doctorId\": \"{{doctor_id}}\",\n  \"assessment\": \"Portfolio assessment\",\n  \"plan\": \"Follow up\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GET /consult-notes",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/consult-notes",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "consult-notes"
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /consult-notes/patient/:patientId",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/consult-notes/patient/:patientId",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "consult-notes",
+            "patient",
+            ":patientId"
+          ],
+          "variable": [
+            {
+              "key": "patientId",
+              "value": "{{patient_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /consult-notes/:id",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/consult-notes/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "consult-notes",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "{{note_id}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "PATCH /consult-notes/:id",
+      "request": {
+        "method": "PATCH",
+        "url": {
+          "raw": "{{base_url}}/consult-notes/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "consult-notes",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "{{note_id}}"
             }
           ]
         },
-        "description": "Delete billing record by id"
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"plan\": \"Updated follow up\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DELETE /consult-notes/:id",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/consult-notes/:id",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "consult-notes",
+            ":id"
+          ],
+          "variable": [
+            {
+              "key": "id",
+              "value": "{{note_id}}"
+            }
+          ]
+        }
       }
     }
-  ]
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  }
 }

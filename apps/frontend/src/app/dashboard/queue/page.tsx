@@ -1,149 +1,227 @@
 "use client";
-
+import type { QueueStatus } from "@hospital/shared";
+import { CheckCircle, Phone } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  EmptyState,
+  Metric,
+  PageHeader,
+  QueryRefresh,
+  QueryState,
+  RecordToolbar,
+  StatusBadge,
+} from "@/components/care-ui";
 import {
   useCallNext,
   useCompleteQueue,
   useQueue,
   useUpdateQueueStatus,
 } from "@/hooks/use-queue";
-import { QueueStatus } from "@hospital/shared";
-import { CheckCircle, Clock, Hash, Phone, StickyNote } from "lucide-react";
-import { toast } from "sonner";
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case "WAITING":
-      return "bg-amber-100 text-amber-700";
-    case "IN_PROGRESS":
-      return "bg-primary/10 text-primary";
-    case "COMPLETED":
-      return "bg-emerald-100 text-emerald-700";
-    case "CANCELLED":
-      return "bg-red-100 text-red-700";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
 
 export default function QueuePage() {
-  const { data: queue, isLoading, isError } = useQueue();
-
-  const updateStatus = useUpdateQueueStatus();
-  const callNext = useCallNext();
-  const completeQueue = useCompleteQueue();
-
-  const handleStatusChange = (id: string, status: QueueStatus) => {
-    updateStatus.mutate({ id, status });
-  };
-
-  if (isLoading) return <div className="p-8">Loading queue...</div>;
-  if (isError) return <div className="p-8 text-red-500">Failed to load</div>;
-
+  const queue = useQueue();
+  const update = useUpdateQueueStatus();
+  const call = useCallNext();
+  const complete = useCompleteQueue();
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("ACTIVE");
+  const active = ["WAITING", "CALLED", "IN_PROGRESS"];
+  const filtered = (queue.data || [])
+    .filter(
+      (item) =>
+        (status === "ALL" ||
+          (status === "ACTIVE"
+            ? active.includes(item.status)
+            : item.status === status)) &&
+        `${item.queueNumber} ${item.patient?.firstName || ""} ${item.patient?.lastName || ""}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
+    )
+    .sort((a, b) => a.queueNumber - b.queueNumber);
+  const waiting = (queue.data || []).filter(
+    (item) => item.status === "WAITING",
+  ).length;
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Patient Queue</h1>
-        <p className="text-muted-foreground">{queue?.length || 0} patients</p>
-        <button
-          onClick={() => {
-            callNext.mutate(undefined, {
-              onSuccess: (data) => {
-                if (data) {
-                  toast.success(`Called patient #${data.queueNumber}`);
-                } else {
-                  toast.info("No patients waiting");
-                }
-              },
-              onError: () => {
-                toast.error("Failed to call next patient");
-              },
-            });
-          }}
-          disabled={
-            callNext.isPending || !queue?.some((e) => e.status === "WAITING")
-          }
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
-        >
-          <Phone className="w-4 h-4" />
-          {callNext.isPending ? "Calling..." : "Call Next"}
-        </button>
-      </div>
-      {queue?.length === 0 && (
-        <div className="text-center py-12 border rounded-lg text-muted-foreground">
-          No patients in queue
-        </div>
-      )}
-
-      <ul className="space-y-2">
-        {queue?.map((entry) => (
-          <li
-            key={entry.id}
-            className="border p-4 rounded flex justify-between items-center hover:bg-accent/50 transition-colors"
+    <div className="workspace">
+      <PageHeader
+        title="Patient Queue"
+        eyebrow="Patient flow"
+        description="Call the next waiting patient, track care in progress, and close completed visits."
+        action={
+          <button
+            type="button"
+            className="btn-primary"
+            disabled={call.isPending || !waiting}
+            onClick={() =>
+              call.mutate(undefined, {
+                onSuccess: (data) =>
+                  data
+                    ? toast.success(`Called patient #${data.queueNumber}`)
+                    : toast.info("No patients waiting"),
+                onError: (error) => toast.error(error.message),
+              })
+            }
           >
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 w-16">
-                <Hash className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xl font-bold">{entry.queueNumber}</span>
-              </div>
-
-              <div className="w-40">
-                <span className="font-medium">
-                  {entry.patient?.firstName} {entry.patient?.lastName}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 text-muted-foreground w-28">
-                <Clock className="h-4 w-4" />
-                <span className="text-sm">
-                  {new Date(entry.createdAt).toLocaleTimeString()}
-                </span>
-              </div>
-
-              {entry.notes && (
-                <div className="flex items-center gap-2 text-muted-foreground max-w-[200px]">
-                  <StickyNote className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-sm truncate">{entry.notes}</span>
-                </div>
-              )}
-
-              {entry.status === "IN_PROGRESS" && (
-                <button
-                  onClick={() => {
-                    completeQueue.mutate(entry.id, {
-                      onSuccess: () => {
-                        toast.success(
-                          `Patient #${entry.queueNumber} completed`
-                        );
-                      },
-                      onError: () => {
-                        toast.error("Failed to complete");
-                      },
-                    });
-                  }}
-                  disabled={completeQueue.isPending}
-                  className="flex items-center gap-2 px-3 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 disabled:opacity-50 transition-colors"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Complete
-                </button>
-              )}
-            </div>
-
-            <select
-              value={entry.status}
-              onChange={(e) =>
-                handleStatusChange(entry.id, e.target.value as QueueStatus)
+            <Phone className="size-4" />
+            {call.isPending ? "Calling…" : "Call Next"}
+          </button>
+        }
+      />
+      <QueryRefresh query={queue} />
+      {queue.isLoading ? (
+        <QueryState loading message="Loading queue…" />
+      ) : queue.isError ? (
+        <QueryState
+          message="Unable to load the patient queue."
+          retry={() => {
+            void queue.refetch();
+          }}
+        />
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Metric
+              label="Waiting"
+              value={waiting}
+              description="Ready to be called"
+            />
+            <Metric
+              label="In care"
+              value={
+                (queue.data || []).filter((item) =>
+                  ["CALLED", "IN_PROGRESS"].includes(item.status),
+                ).length
               }
-              className={`px-3 py-2 rounded-full text-sm font-medium cursor-pointer ${getStatusColor(entry.status)}`}
-            >
-              <option value="WAITING">Waiting</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
-          </li>
-        ))}
-      </ul>
+              description="Called or in progress"
+            />
+            <Metric
+              label="Completed"
+              value={
+                (queue.data || []).filter((item) => item.status === "COMPLETED")
+                  .length
+              }
+              description="Recorded in this queue"
+            />
+          </div>
+          <RecordToolbar
+            label="Search name or queue number"
+            query={query}
+            onQueryChange={setQuery}
+            status={status}
+            onStatusChange={setStatus}
+            statuses={[
+              "ACTIVE",
+              "WAITING",
+              "CALLED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "NO_SHOW",
+            ]}
+            count={filtered.length}
+          />
+          {(update.isError || complete.isError || call.isError) && (
+            <p role="alert" className="panel p-4 text-sm text-destructive">
+              {update.error?.message ||
+                complete.error?.message ||
+                call.error?.message}
+            </p>
+          )}
+          {!filtered.length && (
+            <EmptyState
+              title={
+                status === "ACTIVE" && !query
+                  ? "No patients waiting or in care"
+                  : "No matching queue entries"
+              }
+              description="Add a registered patient to the queue from the patient directory, or adjust the filters to review completed entries."
+              action={
+                <Link href="/dashboard/patients" className="btn-secondary">
+                  Open patients
+                </Link>
+              }
+            />
+          )}
+          <ul className="space-y-3">
+            {filtered.map((item) => (
+              <li
+                key={item.id}
+                className="panel flex flex-wrap items-center justify-between gap-4 p-5"
+              >
+                <div className="flex min-w-0 items-center gap-4">
+                  <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-xl bg-primary/5 text-primary">
+                    <span className="text-[10px] font-semibold uppercase">
+                      Queue
+                    </span>
+                    <span className="text-xl font-semibold tabular-nums">
+                      {item.queueNumber}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="font-semibold">
+                      {item.patient?.firstName} {item.patient?.lastName}
+                    </h2>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Arrived{" "}
+                      {new Date(item.createdAt).toLocaleString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                    {item.notes && (
+                      <p className="mt-2 max-w-lg break-words text-sm text-muted-foreground">
+                        {item.notes}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <StatusBadge status={item.status} />
+                  {item.status === "IN_PROGRESS" && (
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      disabled={complete.isPending}
+                      onClick={() =>
+                        complete.mutate(item.id, {
+                          onSuccess: () =>
+                            toast.success(
+                              `Patient #${item.queueNumber} completed`,
+                            ),
+                        })
+                      }
+                    >
+                      <CheckCircle className="size-4" />
+                      Complete
+                    </button>
+                  )}
+                  <select
+                    className="field w-auto"
+                    aria-label={`Status for queue number ${item.queueNumber}`}
+                    value={item.status}
+                    disabled={update.isPending}
+                    onChange={(e) =>
+                      update.mutate({
+                        id: item.id,
+                        status: e.target.value as QueueStatus,
+                      })
+                    }
+                  >
+                    <option value="WAITING">Waiting</option>
+                    <option value="CALLED">Called</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="NO_SHOW">No Show</option>
+                  </select>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }

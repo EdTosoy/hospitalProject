@@ -1,220 +1,394 @@
 "use client";
-
-import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CalendarDays, Clock, Plus } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import {
+  ConfirmAction,
+  EmptyState,
+  PageHeader,
+  QueryRefresh,
+  QueryState,
+  RecordToolbar,
+  StatusBadge,
+} from "@/components/care-ui";
 import {
   useAppointments,
   useCreateAppointment,
   useUpdateAppointmentStatus,
 } from "@/hooks/use-appointments";
 import { useDoctors } from "@/hooks/use-doctors";
+import { usePatients } from "@/hooks/use-patients";
 import {
-  AppointmentInput,
+  type AppointmentInput,
   appointmentSchema,
 } from "@/lib/validations/appointment";
 import { useAuthStore } from "@/stores/auth-store";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, Clock, FileText } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case "PENDING":
-      return "bg-amber-100 text-amber-700";
-    case "CONFIRMED":
-      return "bg-primary/10 text-primary";
-    case "COMPLETED":
-      return "bg-emerald-100 text-emerald-700";
-    case "CANCELLED":
-      return "bg-red-100 text-red-700";
-    case "NO_SHOW":
-      return "bg-muted text-muted-foreground";
-    default:
-      return "bg-muted text-muted-foreground";
-  }
-}
 
 export default function AppointmentPage() {
-  const { data: appointments, isLoading, isError } = useAppointments();
+  const appointments = useAppointments();
+  const doctors = useDoctors();
+  const patients = usePatients();
   const user = useAuthStore((state) => state.user);
-  const { data: doctors } = useDoctors();
-  const createAppointment = useCreateAppointment();
-  const updateStatus = useUpdateAppointmentStatus();
-
+  const [patientId, setPatientId] = useState("");
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("ALL");
+  const create = useCreateAppointment();
+  const update = useUpdateAppointmentStatus();
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<AppointmentInput>({
-    resolver: zodResolver(appointmentSchema),
-  });
-
-  const onSubmit = (data: AppointmentInput) => {
-    createAppointment.mutate({
-      patientId: user?.id || "",
-      doctorId: data.doctorId || undefined,
-      dateTime: `${data.date}T${data.time}`,
-      reason: data.reason,
-      status: "PENDING",
-    });
-    reset();
-  };
-
-  if (isLoading) return <div className="p-8">Loading Appointments...</div>;
-  if (isError) return <div className="p-8 text-red-500">Failed to load</div>;
-
+  } = useForm<AppointmentInput>({ resolver: zodResolver(appointmentSchema) });
+  const personal = user?.role === "PATIENT";
+  const manage = ["DOCTOR", "ADMIN", "FRONT_DESK"].includes(user?.role || "");
+  const filtered = (appointments.data || [])
+    .filter(
+      (item) =>
+        (status === "ALL" || item.status === status) &&
+        `${item.patient?.firstName || ""} ${item.patient?.lastName || ""} ${item.doctor?.name || ""} ${item.reason}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
+    )
+    .sort((a, b) => a.dateTime.localeCompare(b.dateTime));
+  const queries = [appointments, doctors, patients];
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Appointments</h1>
-        <p className="text-muted-foreground">
-          {appointments?.length || 0} appointments
-        </p>
-      </div>
-
-      <form
-        className="border rounded-lg p-4 space-y-4 bg-card"
-        onSubmit={handleSubmit(onSubmit)}
-      >
-        <h2 className="font-semibold">Book New Appointment</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">
-              Date
-            </label>
-            <Input type="date" {...register("date")} />
-            {errors.date && (
-              <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
-            )}
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">
-              Time
-            </label>
-            <Input type="time" {...register("time")} />
-            {errors.time && (
-              <p className="text-red-500 text-sm mt-1">{errors.time.message}</p>
-            )}
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">
-              Reason
-            </label>
-            <Input
-              type="text"
-              placeholder="Reason for visit"
-              {...register("reason")}
+    <div className="workspace">
+      <PageHeader
+        title="Appointments"
+        eyebrow={personal ? "Your visits" : "Scheduling"}
+        description={
+          personal
+            ? "Book a visit and follow its progress from request to confirmation."
+            : "Coordinate visits, confirm requests, and keep each appointment up to date."
+        }
+        action={
+          <a href="#booking-form" className="btn-primary">
+            <Plus className="size-4" />
+            Book a visit
+          </a>
+        }
+      />
+      <QueryRefresh query={appointments} />
+      {queries.some((q) => q.isLoading) ? (
+        <QueryState loading message="Loading appointments…" />
+      ) : queries.some((q) => q.isError) ? (
+        <QueryState
+          message="Unable to load appointments, patients, or doctors. Please retry."
+          retry={() => {
+            for (const q of queries) void q.refetch();
+          }}
+        />
+      ) : (
+        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <section className="min-w-0 space-y-4">
+            <RecordToolbar
+              query={query}
+              onQueryChange={setQuery}
+              label={
+                personal
+                  ? "Search visits or doctors"
+                  : "Search patients, doctors, or visits"
+              }
+              status={status}
+              onStatusChange={setStatus}
+              statuses={[
+                "PENDING",
+                "CONFIRMED",
+                "COMPLETED",
+                "CANCELLED",
+                "NO_SHOW",
+              ]}
+              count={filtered.length}
             />
-            {errors.reason && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.reason.message}
+            {update.isError && (
+              <p role="alert" className="panel p-4 text-sm text-destructive">
+                {update.error.message}
               </p>
             )}
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground mb-1 block">
-              Doctor
-            </label>
-            <select
-              {...register("doctorId")}
-              className="w-full p-2 border rounded-lg bg-background"
-            >
-              <option value="">Any Available</option>
-              {doctors?.map((doctor) => (
-                <option key={doctor.id} value={doctor.id}>
-                  {doctor.name || doctor.email}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <button
-          type="submit"
-          disabled={createAppointment.isPending}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-        >
-          {createAppointment.isPending ? "Booking..." : "Book Appointment"}
-        </button>
-      </form>
-
-      {appointments?.length === 0 && (
-        <div className="text-center py-12 border rounded-lg text-muted-foreground">
-          No appointments scheduled
+            {!filtered.length && (
+              <EmptyState
+                title={
+                  appointments.data?.length
+                    ? "No matching appointments"
+                    : "No appointments scheduled"
+                }
+                description={
+                  appointments.data?.length
+                    ? "Try another search or status filter."
+                    : "Use the booking form to request your first visit."
+                }
+              />
+            )}
+            {filtered.map((item) => (
+              <article
+                key={item.id}
+                data-testid="appointment-record"
+                className="panel p-5"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                      <CalendarDays className="size-4 text-primary" />
+                      {new Date(item.dateTime).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                      <span className="mx-1 text-muted-foreground/40">·</span>
+                      <Clock className="size-4 text-muted-foreground" />
+                      {new Date(item.dateTime).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                    <h2 className="mt-3 text-lg font-semibold">
+                      {personal
+                        ? item.doctor?.name || "Doctor to be assigned"
+                        : item.patient
+                          ? `${item.patient.firstName} ${item.patient.lastName}`
+                          : "Patient appointment"}
+                    </h2>
+                    {!personal && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {item.doctor?.name || "Doctor to be assigned"}
+                      </p>
+                    )}
+                    <p className="mt-3 break-words text-sm text-muted-foreground">
+                      {item.reason}
+                    </p>
+                  </div>
+                  <StatusBadge status={item.status} />
+                </div>
+                {((manage && ["PENDING", "CONFIRMED"].includes(item.status)) ||
+                  (personal &&
+                    ["PENDING", "CONFIRMED"].includes(item.status))) && (
+                  <div className="mt-5 flex flex-wrap justify-end gap-2 border-t pt-4">
+                    {manage && item.status === "PENDING" && (
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        disabled={update.isPending}
+                        onClick={() =>
+                          update.mutate(
+                            { id: item.id, status: "CONFIRMED" },
+                            {
+                              onSuccess: () =>
+                                toast.success("Appointment confirmed"),
+                            },
+                          )
+                        }
+                      >
+                        Confirm
+                      </button>
+                    )}
+                    {manage && item.status === "CONFIRMED" && (
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        disabled={update.isPending}
+                        onClick={() =>
+                          update.mutate(
+                            { id: item.id, status: "COMPLETED" },
+                            {
+                              onSuccess: () =>
+                                toast.success("Appointment completed"),
+                            },
+                          )
+                        }
+                      >
+                        Complete appointment
+                      </button>
+                    )}
+                    <ConfirmAction
+                      label={personal ? "Cancel appointment" : "Cancel"}
+                      title="Cancel this appointment?"
+                      description={`The visit on ${new Date(item.dateTime).toLocaleString()} will be marked cancelled. You can book another appointment if needed.`}
+                      destructive
+                      disabled={update.isPending}
+                      onConfirm={async () => {
+                        await update.mutateAsync({
+                          id: item.id,
+                          status: "CANCELLED",
+                        });
+                        toast.success("Appointment cancelled");
+                      }}
+                    />
+                  </div>
+                )}
+              </article>
+            ))}
+          </section>
+          <form
+            id="booking-form"
+            className="panel scroll-mt-24 p-5 sm:p-6"
+            onSubmit={handleSubmit((data) =>
+              create.mutate(
+                {
+                  patientId: personal
+                    ? patients.data?.[0]?.id || ""
+                    : patientId,
+                  doctorId: data.doctorId || undefined,
+                  dateTime: new Date(`${data.date}T${data.time}`).toISOString(),
+                  reason: data.reason,
+                  status: "PENDING",
+                },
+                {
+                  onSuccess: () => {
+                    reset();
+                    toast.success("Appointment booked");
+                  },
+                },
+              ),
+            )}
+          >
+            <div className="mb-5 border-b pb-5">
+              <p className="eyebrow">New visit</p>
+              <h2 className="mt-2 text-xl font-semibold">
+                Book New Appointment
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Choose a date and time. Your request will be pending until the
+                care team confirms it.
+              </p>
+            </div>
+            {personal && !patients.data?.length && (
+              <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+                Complete your{" "}
+                <Link
+                  className="font-semibold underline"
+                  href="/dashboard/profile"
+                >
+                  patient profile
+                </Link>{" "}
+                before booking.
+              </p>
+            )}
+            <div className="space-y-4">
+              {!personal && (
+                <div>
+                  <label
+                    htmlFor="booking-patient"
+                    className="mb-1.5 block text-sm font-medium"
+                  >
+                    Patient
+                  </label>
+                  <select
+                    id="booking-patient"
+                    className="field"
+                    required
+                    value={patientId}
+                    onChange={(e) => setPatientId(e.target.value)}
+                  >
+                    <option value="">Select a patient</option>
+                    {patients.data?.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.firstName} {item.lastName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                {(
+                  [
+                    ["date", "Date", "date"],
+                    ["time", "Time", "time"],
+                  ] as const
+                ).map(([key, label, type]) => (
+                  <div key={key}>
+                    <label
+                      className="mb-1.5 block text-sm font-medium"
+                      htmlFor={`booking-${key}`}
+                    >
+                      {label}
+                    </label>
+                    <input
+                      id={`booking-${key}`}
+                      type={type}
+                      className="field"
+                      aria-invalid={!!errors[key]}
+                      aria-describedby={
+                        errors[key] ? `${key}-error` : undefined
+                      }
+                      {...register(key)}
+                    />
+                    {errors[key] && (
+                      <p
+                        id={`${key}-error`}
+                        className="mt-1 text-xs text-destructive"
+                      >
+                        {errors[key]?.message}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div>
+                <label
+                  className="mb-1.5 block text-sm font-medium"
+                  htmlFor="booking-doctor"
+                >
+                  Doctor
+                </label>
+                <select
+                  id="booking-doctor"
+                  className="field"
+                  {...register("doctorId")}
+                >
+                  <option value="">No preference</option>
+                  {doctors.data?.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name || item.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  className="mb-1.5 block text-sm font-medium"
+                  htmlFor="booking-reason"
+                >
+                  Reason
+                </label>
+                <textarea
+                  id="booking-reason"
+                  placeholder="Briefly describe the reason for your visit"
+                  className="field min-h-24"
+                  aria-invalid={!!errors.reason}
+                  aria-describedby={errors.reason ? "reason-error" : undefined}
+                  {...register("reason")}
+                />
+                {errors.reason && (
+                  <p
+                    id="reason-error"
+                    className="mt-1 text-xs text-destructive"
+                  >
+                    {errors.reason.message}
+                  </p>
+                )}
+              </div>
+              {create.isError && (
+                <p role="alert" className="text-sm text-destructive">
+                  {create.error.message}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={
+                  create.isPending || (personal && !patients.data?.length)
+                }
+                className="btn-primary w-full"
+              >
+                {create.isPending ? "Booking…" : "Book Appointment"}
+              </button>
+            </div>
+          </form>
         </div>
       )}
-
-      <div className="space-y-3">
-        {appointments?.map((appointment) => (
-          <div
-            key={appointment.id}
-            className="border p-4 rounded-lg flex items-center justify-between hover:bg-accent/50 transition-colors"
-          >
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">
-                  {new Date(appointment.dateTime).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span className="text-sm">
-                  {new Date(appointment.dateTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
-                <span>{appointment.reason}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                  appointment.status
-                )}`}
-              >
-                {appointment.status}
-              </span>
-              {user?.role === "DOCTOR" && appointment.status === "PENDING" && (
-                <>
-                  <button
-                    onClick={() =>
-                      updateStatus.mutate(
-                        { id: appointment.id, status: "CONFIRMED" },
-                        {
-                          onSuccess: () =>
-                            toast.success("Appointment confirmed"),
-                        }
-                      )
-                    }
-                    disabled={updateStatus.isPending}
-                    className="px-3 py-1 bg-emerald-500 text-white rounded-lg text-sm hover:bg-emerald-600"
-                  >
-                    Confirm
-                  </button>
-                  <button
-                    onClick={() =>
-                      updateStatus.mutate(
-                        { id: appointment.id, status: "CANCELLED" },
-                        { onSuccess: () => toast.info("Appointment cancelled") }
-                      )
-                    }
-                    disabled={updateStatus.isPending}
-                    className="px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600"
-                  >
-                    Cancel
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

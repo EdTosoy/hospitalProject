@@ -1,5 +1,7 @@
+import type { AuthenticatedRequest } from '../database/access';
 import {
   Controller,
+  Request,
   Get,
   Post,
   Body,
@@ -11,11 +13,12 @@ import {
 import { ConsultNotesService } from './consult-notes.service';
 import { CreateConsultNoteDto } from './dto/create-consult-note.dto';
 import { UpdateConsultNoteDto } from './dto/update-consult-note.dto';
-import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
-import { RolesGuard } from 'src/auth/roles/roles.guard';
-import { Roles } from 'src/auth/roles/roles.decorators';
-import { Role } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
+import { RolesGuard } from '../auth/roles/roles.guard';
+import { Roles } from '../auth/roles/roles.decorators';
+import { Role } from '../database/schema';
 
+@Roles(Role.DOCTOR, Role.NURSE, Role.ADMIN)
 @Controller('consult-notes')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ConsultNotesController {
@@ -23,8 +26,11 @@ export class ConsultNotesController {
 
   @Post()
   @Roles(Role.DOCTOR)
-  create(@Body() createConsultNoteDto: CreateConsultNoteDto) {
-    return this.consultNotesService.create(createConsultNoteDto);
+  create(
+    @Request() req: AuthenticatedRequest,
+    @Body() createConsultNoteDto: CreateConsultNoteDto,
+  ) {
+    return this.consultNotesService.create(createConsultNoteDto, req.user);
   }
 
   @Get()
@@ -34,7 +40,7 @@ export class ConsultNotesController {
   }
 
   @Get('patient/:patientId')
-  @Roles(Role.DOCTOR, Role.NURSE)
+  @Roles(Role.DOCTOR, Role.NURSE, Role.ADMIN)
   findByPatient(@Param('patientId') patientId: string) {
     return this.consultNotesService.findByPatient(patientId);
   }
@@ -47,15 +53,16 @@ export class ConsultNotesController {
   @Patch(':id')
   @Roles(Role.DOCTOR)
   update(
+    @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Body() updateConsultNoteDto: UpdateConsultNoteDto,
   ) {
-    return this.consultNotesService.update(id, updateConsultNoteDto);
+    return this.consultNotesService.update(id, updateConsultNoteDto, req.user);
   }
 
   @Delete(':id')
   @Roles(Role.DOCTOR, Role.ADMIN)
-  remove(@Param('id') id: string) {
-    return this.consultNotesService.remove(id);
+  remove(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.consultNotesService.remove(id, req.user);
   }
 }

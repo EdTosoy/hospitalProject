@@ -1,126 +1,148 @@
 "use client";
-
+import { Check, Pencil } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { PageHeader } from "@/components/care-ui";
+import { PatientProfile } from "@/components/patient-profile";
+import { roleLabels } from "@/components/workspace-header";
 import { useUpdateUser } from "@/hooks/use-update-user";
 import { useAuthStore } from "@/stores/auth-store";
-import { Check, Mail, Pencil, Shield, User, X } from "lucide-react";
-import { useState } from "react";
 
 export default function ProfilePage() {
   const user = useAuthStore((state) => state.user);
-  const updateUser = useUpdateUser();
-
-  const [isEditing, setIsEditing] = useState(false);
+  const update = useUpdateUser();
+  const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
-
-  const handleSave = () => {
-    updateUser.mutate(
-      {
-        name,
-        email,
-      },
-      {
-        onSuccess: () => setIsEditing(false),
-      }
-    );
-  };
-
-  const handleCancel = () => {
+  const begin = () => {
     setName(user?.name || "");
     setEmail(user?.email || "");
-    setIsEditing(false);
+    update.reset();
+    setEditing(true);
   };
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Profile</h1>
-        {!isEditing && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+    <div className="workspace">
+      <PageHeader
+        title="My Profile"
+        eyebrow="Account & patient details"
+        description="Keep your sign-in information and patient details accurate. Your account role is managed by the care team."
+      />
+      <section className="panel p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-5">
+          <div className="flex min-w-0 items-center gap-4">
+            <div
+              aria-hidden="true"
+              className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-xl font-semibold text-primary"
+            >
+              {(user?.name || "U").slice(0, 2).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-xl font-semibold">
+                {user?.name || "Your account"}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {roleLabels[user?.role || ""]}
+              </p>
+            </div>
+          </div>
+          {!editing && (
+            <button type="button" className="btn-secondary" onClick={begin}>
+              <Pencil className="size-4" />
+              Edit Profile
+            </button>
+          )}
+        </div>
+        {editing ? (
+          <form
+            className="mt-5 max-w-2xl space-y-5"
+            onSubmit={(event) => {
+              event.preventDefault();
+              update.mutate(
+                { name: name.trim(), email: email.trim() },
+                {
+                  onSuccess: () => {
+                    setEditing(false);
+                    toast.success("Profile updated");
+                  },
+                },
+              );
+            }}
           >
-            <Pencil className="w-4 h-4" />
-            Edit Profile
-          </button>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="account-name"
+                  className="mb-1.5 block text-sm font-medium"
+                >
+                  Name
+                </label>
+                <input
+                  id="account-name"
+                  className="field"
+                  required
+                  autoComplete="name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="account-email"
+                  className="mb-1.5 block text-sm font-medium"
+                >
+                  Email
+                </label>
+                <input
+                  id="account-email"
+                  type="email"
+                  className="field"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </div>
+            </div>
+            {update.isError && (
+              <p role="alert" className="text-sm text-destructive">
+                {update.error.message}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={update.isPending}
+                className="btn-secondary"
+                onClick={() => setEditing(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={update.isPending || !name.trim()}
+                className="btn-primary"
+              >
+                <Check className="size-4" />
+                {update.isPending ? "Saving…" : "Save Changes"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <dl className="mt-5 grid gap-5 sm:grid-cols-2">
+            <div>
+              <dt className="text-xs text-muted-foreground">Name</dt>
+              <dd className="mt-1 font-medium">
+                {user?.name || "Not provided"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Email</dt>
+              <dd className="mt-1 break-all font-medium">{user?.email}</dd>
+            </div>
+          </dl>
         )}
-      </div>
-      <div className="flex items-center gap-6 mb-8">
-        <img
-          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || user?.email || "U")}&size=120&background=01bfa5&color=fff&bold=true`}
-          alt="Avatar"
-          className="w-24 h-24 rounded-full ring-4 ring-primary/20"
-        />
-        <div>
-          <h2 className="text-2xl font-bold">{user?.name || "User"}</h2>
-          <p className="text-muted-foreground">{user?.email}</p>
-        </div>
-      </div>
-      <div className="max-w-md space-y-4">
-        <div className="border rounded-xl p-4 flex items-center gap-4 hover:bg-muted/50 transition-colors">
-          <div className="p-3 bg-primary/10 rounded-lg">
-            <User className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <label className="text-sm text-muted-foreground">Name</label>
-            {isEditing ? (
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full p-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            ) : (
-              <p className="font-medium">{user?.name || "—"}</p>
-            )}
-          </div>
-        </div>
-        <div className="border rounded-xl p-4 flex items-center gap-4 hover:bg-muted/50 transition-colors">
-          <div className="p-3 bg-primary/10 rounded-lg">
-            <Mail className="w-5 h-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <label className="text-sm text-muted-foreground">Email</label>
-            {isEditing ? (
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            ) : (
-              <p className="font-medium">{user?.email}</p>
-            )}
-          </div>
-        </div>
-        <div className="border rounded-xl p-4 flex items-center gap-4 hover:bg-muted/50 transition-colors">
-          <div className="p-3 bg-primary/10 rounded-lg">
-            <Shield className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">Role</label>
-            <p className="font-medium">{user?.role}</p>
-          </div>
-        </div>
-      </div>
-      {isEditing && (
-        <div className="flex gap-3 max-w-md">
-          <button
-            onClick={handleCancel}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border rounded-lg hover:bg-muted/50 transition-colors"
-          >
-            <X className="w-4 h-4" />
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={updateUser.isPending}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
-          >
-            <Check className="w-4 h-4" />
-            {updateUser.isPending ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
-      )}
+      </section>
+      <PatientProfile />
     </div>
   );
 }

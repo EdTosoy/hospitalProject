@@ -1,32 +1,24 @@
-import { apiFetch } from "@/lib/api";
-import { useAuthStore } from "@/stores/auth-store";
+import type { User } from "@hospital/shared";
 import { useMutation } from "@tanstack/react-query";
+import { apiAuthFetch } from "@/lib/api";
+import { useAuthStore } from "@/stores/auth-store";
 
 interface UpdateUserInput {
   name?: string;
   email?: string;
 }
 
-interface UpdateUserResponse {
-  id: string;
-  name: string;
-  email: string;
-  role: "PATIENT" | "DOCTOR" | "NURSE" | "FRONT_DESK" | "BILLING";
-}
-
 export function useUpdateUser() {
-  const { user, token, setUser } = useAuthStore();
+  const { user, setUser } = useAuthStore();
 
   return useMutation({
     mutationFn: async (data: UpdateUserInput) =>
-      apiFetch<UpdateUserResponse>(`/users/${user?.id}`, {
+      apiAuthFetch<User>(`/users/${user?.id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
       }),
-    onSuccess: (updatedUser: UpdateUserResponse) => {
-      if (token) {
-        setUser(updatedUser);
-      }
+    onSuccess: (updatedUser: User) => {
+      setUser(updatedUser);
     },
   });
 }

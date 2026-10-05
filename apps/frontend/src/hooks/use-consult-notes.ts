@@ -1,21 +1,10 @@
-import { apiAuthFetch } from "@/lib/api";
+import type { ConsultNote, CreateConsultNoteInput } from "@hospital/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-interface ConsultNote {
-  id: string;
-  patientId: string;
-  doctorId: string;
-  appointmentId?: string;
-  subjective?: string;
-  objective?: string;
-  assessment?: string;
-  plan?: string;
-  createdAt: string;
-  doctor?: { name: string };
-}
+import { apiAuthFetch } from "@/lib/api";
 
 export function useConsultNotes(patientId: string) {
   return useQuery({
+    refetchOnWindowFocus: true,
     queryKey: ["consult-notes", patientId],
     queryFn: () =>
       apiAuthFetch<ConsultNote[]>(`/consult-notes/patient/${patientId}`),
@@ -27,7 +16,7 @@ export function useCreateConsultNote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Omit<ConsultNote, "id" | "createdAt" | "doctor">) =>
+    mutationFn: (data: CreateConsultNoteInput) =>
       apiAuthFetch<ConsultNote>("/consult-notes", {
         method: "POST",
         body: JSON.stringify(data),
