@@ -1,16 +1,16 @@
 "use client";
 
-import { type LucideIcon } from "lucide-react";
-
+import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
 
 export function NavMain({
   items,
@@ -23,20 +23,39 @@ export function NavMain({
   }[];
 }) {
   const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>Workspace</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
-          const isActive = pathname === item.url;
+          const isActive =
+            item.url === "/dashboard"
+              ? [
+                  "/dashboard",
+                  "/dashboard/patient",
+                  "/dashboard/doctor",
+                  "/dashboard/staff",
+                ].includes(pathname)
+              : pathname === item.url ||
+                (item.url === "/dashboard/patients" &&
+                  pathname.startsWith("/dashboard/consult/"));
           return (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 asChild
                 isActive={isActive}
-                className={isActive ? "bg-primary/10 text-primary" : ""}
+                className={
+                  isActive ? "min-h-11 bg-primary/10 text-primary" : "min-h-11"
+                }
               >
-                <Link href={item.url}>
+                <Link
+                  href={item.url}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => {
+                    if (isMobile) setOpenMobile(false);
+                  }}
+                >
                   {item.icon && (
                     <item.icon
                       className={

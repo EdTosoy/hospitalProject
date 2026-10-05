@@ -1,61 +1,67 @@
 services:
   database:
-    image: "postgres:17"
+    image: postgres:17
     ports:
-      - 15432:5432
-    env_file:
-      - .env
-    networks:
-      - postgres-network
+      - "127.0.0.1:15432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB}
     volumes:
-      - pulse_db_data:/var/lib/postgresql/data/
-
+      - pulse_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
   pgadmin:
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:9
+    profiles: [tools]
     ports:
-      - 15433:80
-    env_file:
-      - .env
+      - "127.0.0.1:15433:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.test}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD}
     depends_on:
-      - database
-    networks:
-      - postgres-network
+      database:
+        condition: service_healthy
     volumes:
-      - pulse_pgadmin_data:/var/lib/pgadmin/
+      - pulse_pgadmin_data:/var/lib/pgadmin
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
-
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+    command: ["node", "dist/src/database/migrate.js"]
+    depends_on:
+      database:
+        condition: service_healthy
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
-      args:
-        DATABASE_URL: ${DATABASE_URL}
     ports:
-      - 8080:8080
-    env_file:
-      - ./apps/backend/.env
+      - "127.0.0.1:8080:8080"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      PORT: 8080
     depends_on:
-      - database
-    networks:
-      - postgres-network
-
+      migrate:
+        condition: service_completed_successfully
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
     ports:
-      - 3000:3000
+      - "127.0.0.1:3000:3000"
     depends_on:
       - backend
-    networks:
-      - postgres-network
-
-networks:
-  postgres-network:
-    driver: bridge
-
 volumes:
   pulse_db_data:
   pulse_pgadmin_data:

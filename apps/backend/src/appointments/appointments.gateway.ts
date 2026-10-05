@@ -2,27 +2,46 @@ import {
   WebSocketGateway,
   WebSocketServer,
   OnGatewayConnection,
-  OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { JwtService } from '@nestjs/jwt';
+import { DatabaseService } from '../database/database.service';
+import { sessions } from '../database/schema';
+import { eq } from 'drizzle-orm';
 import { Server, Socket } from 'socket.io';
-
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: {
+    origin: process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:3001'],
+  },
 })
-export class AppointmentsGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
-  @WebSocketServer()
-  server!: Server;
-
-  handleConnection(client: Socket) {
-    console.log('Client connected:', client.id);
+export class AppointmentsGateway implements OnGatewayConnection {
+  @WebSocketServer() server!: Server;
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly database: DatabaseService,
+  ) {}
+  async handleConnection(client: Socket) {
+    try {
+      const payload = await this.jwt.verifyAsync<{ sub: string; sid?: string }>(
+        client.handshake.auth.token,
+      );
+      if (!payload.sid) {
+        client.disconnect(true);
+        return;
+      }
+      const session = await this.database.db.query.sessions.findFirst({
+        where: eq(sessions.id, payload.sid),
+      });
+      if (
+        !session ||
+        session.userId !== payload.sub ||
+        session.expiresAt <= new Date()
+      )
+        client.disconnect(true);
+    } catch {
+      client.disconnect(true);
+    }
   }
-
-  handleDisconnect(client: Socket) {
-    console.log('Client disconnected:', client.id);
-  }
-  emitAppointmentUpdated(payload: any) {
-    this.server.emit('appointment.updated', payload);
+  emitAppointmentUpdated() {
+    this.server?.emit('appointment.updated', { refresh: true });
   }
 }

@@ -1,36 +1,11 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pulse frontend
 
-## Getting Started
+Next.js 16 App Router, React 19, Tailwind 4, Radix primitives, React Hook Form/Zod, React Query, and Zustand. The interface uses shared navigation, form controls, status indicators, and role-specific workflows. Real patient, doctor, staff, admin, and billing workflows use the NestJS API.
 
-First, run the development server:
+See [root setup](../../README.md) and [the audit](../../docs/audit.md). Development and local standalone production servers default to http://localhost:3001. Set `NEXT_PUBLIC_API_URL` before building; it is a browser-visible, build-time value.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Commands from the root: `pnpm --filter frontend dev`, `build`, `start`, `lint`, `format:check`, `typecheck`, and `test:e2e`. Browser tests start both applications and require a dedicated migrated PostgreSQL test database.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+See [UI/UX decisions and verification](../../docs/ui-ux.md) for the redesign, responsive browser checks, and known product limitations.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Browser authentication uses HttpOnly cookies with in-memory user identity and `/auth/me` restoration. Frontend/API must share a site; production requires HTTPS and matching `CORS_ORIGIN`. Queue/scheduling/billing refresh every five seconds while visible. Billing uses PHP and includes an explicit legacy-currency review form. See the [quality repairs](../../docs/code-quality-fixes.md).

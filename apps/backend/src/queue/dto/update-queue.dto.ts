@@ -1,10 +1,12 @@
 import { PartialType } from '@nestjs/swagger';
 import { CreateQueueDto } from './create-queue.dto';
-import { IsEnum, IsOptional } from 'class-validator';
-import { QueueStatus } from '@prisma/client';
+import { IsEnum, ValidateIf } from 'class-validator';
+import { QueueStatus } from '../../database/schema';
 
-export class UpdateQueueDto extends PartialType(CreateQueueDto) {
-  @IsOptional()
+export class UpdateQueueDto extends PartialType(CreateQueueDto, {
+  skipNullProperties: false,
+}) {
+  @ValidateIf((_object, value) => value !== undefined)
   @IsEnum(QueueStatus)
   status?: QueueStatus;
 }

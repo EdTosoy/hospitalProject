@@ -1,10 +1,10 @@
 "use client";
 
-import { useAuthStore } from "@/stores/auth-store";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useAuthStore } from "@/stores/auth-store";
 
-const STAFF_ROLES = ["FRONT_DESK", "NURSE", "BILLING"];
+const STAFF_ROLES = ["FRONT_DESK", "NURSE", "BILLING", "ADMIN"];
 
 export default function StaffLayout({
   children,

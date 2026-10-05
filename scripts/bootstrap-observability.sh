@@ -26,5 +26,4 @@ helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
 log "Waiting for Grafana to be ready..."
 kubectl --namespace monitoring wait --for=condition=Ready pod -l app.kubernetes.io/name=grafana --timeout=180s
 
-log "Grafana admin password:"
-echo -e "${RED}$(kubectl --namespace monitoring get secret monitoring-grafana -o jsonpath="{.data.admin-password}" | base64 -d)${NO_COLOR}"
+log "Grafana is ready. Retrieve its credentials privately from your Kubernetes secret manager."

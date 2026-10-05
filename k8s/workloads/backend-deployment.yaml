@@ -14,6 +14,13 @@ spec:
     spec:
       imagePullSecrets:
         - name: ecr-pull-secret  
+      initContainers:
+        - name: db-migrate
+          image: 163596511125.dkr.ecr.us-east-1.amazonaws.com/hospital-project-backend:ec21983e4f8532145a2430d9bb2d8deaba8ea611
+          command: ["node", "dist/src/database/migrate.js"]
+          envFrom:
+            - secretRef:
+                name: backend-secret
       containers:
         - name: backend
           image: 163596511125.dkr.ecr.us-east-1.amazonaws.com/hospital-project-backend:ec21983e4f8532145a2430d9bb2d8deaba8ea611

@@ -1,10 +1,12 @@
-import { AppointmentStatus } from '@prisma/client';
+import { Transform } from 'class-transformer';
+import { AppointmentStatus } from '../../database/schema';
 import {
   IsDateString,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateAppointmentDto {
@@ -17,14 +19,15 @@ export class CreateAppointmentDto {
   doctorId?: string;
 
   @IsNotEmpty()
-  @IsDateString()
+  @IsDateString({ strict: true })
   dateTime!: string;
 
   @IsNotEmpty()
   @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   reason!: string;
 
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsEnum(AppointmentStatus)
   status?: AppointmentStatus;
 }

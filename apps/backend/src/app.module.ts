@@ -8,7 +8,7 @@ import { UsersModule } from './users/users.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { QueueModule } from './queue/queue.module';
 import { BillingModule } from './billing/billing.module';
-import { PrismaModule } from './prisma/prisma.module';
+import { DatabaseModule } from './database/database.module';
 import { ConsultNotesModule } from './consult-notes/consult-notes.module';
 
 @Module({
@@ -22,7 +22,7 @@ import { ConsultNotesModule } from './consult-notes/consult-notes.module';
     AppointmentsModule,
     QueueModule,
     BillingModule,
-    PrismaModule,
+    DatabaseModule,
     ConsultNotesModule,
   ],
   controllers: [AppController],

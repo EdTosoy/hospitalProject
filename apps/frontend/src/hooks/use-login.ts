@@ -1,6 +1,6 @@
+import { useMutation } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
-import { useMutation } from "@tanstack/react-query";
 
 interface LoginRequest {
   email: string;
@@ -9,12 +9,7 @@ interface LoginRequest {
 
 interface LoginResponse {
   access_token: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: "PATIENT" | "DOCTOR" | "NURSE" | "FRONT_DESK" | "BILLING";
-  };
+  user: import("@hospital/shared").User;
 }
 
 export function useLogin() {
@@ -27,7 +22,7 @@ export function useLogin() {
         body: JSON.stringify(credentials),
       }),
     onSuccess: (data) => {
-      setAuth(data.access_token, data.user);
+      setAuth(data.user);
     },
   });
 }

@@ -1,58 +1,109 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
+import { eq } from 'drizzle-orm';
+import { DatabaseService } from '../database/database.service';
+import { patients } from '../database/schema';
+import { Actor, found, requireStaff } from '../database/access';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-
 @Injectable()
 export class PatientsService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  async create(userId: string, createPatientDto: CreatePatientDto) {
-    const existingPatient = await this.prisma.patient.findUnique({
-      where: { userId },
-    });
-
-    if (existingPatient) {
+  constructor(private readonly database: DatabaseService) {}
+  async create(userId: string, dto: CreatePatientDto, actor: Actor) {
+    if (
+      await this.database.db.query.patients.findFirst({
+        where: eq(patients.userId, userId),
+      })
+    )
       throw new BadRequestException(
         'Patient profile already exists for this user',
       );
-    }
-
-    return this.prisma.patient.create({
-      data: {
-        ...createPatientDto,
-        dob: new Date(createPatientDto.dob).toISOString(),
-        userId,
-      },
+    return this.database.audit(
+      actor,
+      'Patient',
+      'CREATE',
+      Object.keys(dto),
+      async (tx) =>
+        found(
+          (
+            await tx
+              .insert(patients)
+              .values({ ...dto, dob: new Date(dto.dob), userId })
+              .returning()
+          )[0],
+        ),
+    );
+  }
+  async registerWalkIn(dto: CreatePatientDto, actor: Actor) {
+    return this.database.audit(
+      actor,
+      'Patient',
+      'CREATE',
+      Object.keys(dto),
+      async (tx) =>
+        found(
+          (
+            await tx
+              .insert(patients)
+              .values({ ...dto, dob: new Date(dto.dob) })
+              .returning()
+          )[0],
+        ),
+    );
+  }
+  findAll(actor: Actor) {
+    if (actor.role === 'BILLING')
+      return this.database.db.query.patients.findMany({
+        columns: { id: true, firstName: true, lastName: true },
+      });
+    return this.database.db.query.patients.findMany({
+      where:
+        actor.role === 'PATIENT'
+          ? eq(patients.userId, actor.userId)
+          : undefined,
     });
   }
-
-  async registerWalkIn(createPatientDto: CreatePatientDto) {
-    return this.prisma.patient.create({
-      data: {
-        ...createPatientDto,
-        dob: new Date(createPatientDto.dob).toISOString(),
-      },
-    });
+  async findOne(id: string, actor: Actor) {
+    if (actor.role === 'BILLING') throw new ForbiddenException();
+    const row = found(
+      await this.database.db.query.patients.findFirst({
+        where: eq(patients.id, id),
+      }),
+    );
+    if (actor.role === 'PATIENT' && row.userId !== actor.userId)
+      throw new ForbiddenException();
+    return row;
   }
-  findAll() {
-    return this.prisma.patient.findMany();
+  async update(id: string, dto: UpdatePatientDto, actor: Actor) {
+    if (!Object.keys(dto).length)
+      throw new BadRequestException('No patient changes supplied');
+    await this.findOne(id, actor);
+    return this.database.audit(
+      actor,
+      'Patient',
+      'UPDATE',
+      Object.keys(dto),
+      async (tx) =>
+        found(
+          (
+            await tx
+              .update(patients)
+              .set({ ...dto, dob: dto.dob ? new Date(dto.dob) : undefined })
+              .where(eq(patients.id, id))
+              .returning()
+          )[0],
+        ),
+    );
   }
-
-  findOne(id: string) {
-    return this.prisma.patient.findUnique({ where: { id } });
-  }
-
-  update(id: string, updatePatientDto: UpdatePatientDto) {
-    return this.prisma.patient.update({
-      where: { id },
-      data: updatePatientDto,
-    });
-  }
-
-  remove(id: string) {
-    return this.prisma.patient.delete({
-      where: { id },
-    });
+  async remove(id: string, actor: Actor) {
+    requireStaff(actor);
+    return this.database.audit(actor, 'Patient', 'DELETE', [], async (tx) =>
+      found(
+        (await tx.delete(patients).where(eq(patients.id, id)).returning())[0],
+      ),
+    );
   }
 }

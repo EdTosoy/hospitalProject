@@ -1,5 +1,5 @@
-import { apiFetch } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
 
 interface RegisterRequest {
   name: string;

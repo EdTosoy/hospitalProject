@@ -4,10 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "lsof -ti:3000,3001 | xargs kill -9 && turbo dev",
+    "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
-    "format": "turbo format"
+    "format": "turbo format",
+    "test": "pnpm --filter backend test -- --runInBand",
+    "typecheck": "pnpm --filter backend typecheck && pnpm --filter frontend typecheck",
+    "format:check": "pnpm --filter backend format:check && pnpm --filter frontend format:check"
   },
   "repository": {
     "type": "git",
@@ -23,6 +26,14 @@
   "homepage": "https://github.com/EdTosoy/hospitalProject#readme",
   "packageManager": "pnpm@9.0.0",
   "devDependencies": {
-    "turbo": "^2.6.3"
+    "turbo": "^2.11.7"
+  },
+  "engines": {
+    "node": ">=22.13 <25"
+  },
+  "pnpm": {
+    "overrides": {
+      "@nestjs/swagger>js-yaml": "5.4.1"
+    }
   }
 }
