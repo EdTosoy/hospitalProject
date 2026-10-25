@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { defineConfig } from "@playwright/test";
+import { apiPort, apiUrl, webPort, webUrl } from "./test/support/urls";
 
 if (
   !process.env.DATABASE_URL ||
@@ -13,7 +14,7 @@ export default defineConfig({
   workers: 1,
   timeout: 60000,
   use: {
-    baseURL: "http://localhost:3001",
+    baseURL: webUrl,
     trace: "retain-on-failure",
     launchOptions: {
       executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
@@ -23,13 +24,13 @@ export default defineConfig({
     {
       command: "pnpm --filter backend db:seed && pnpm --filter backend prod",
       cwd: resolve(__dirname, "../.."),
-      url: "http://localhost:3000/health",
+      url: `${apiUrl}/health`,
       reuseExistingServer: false,
       timeout: 60000,
       env: {
         JWT_SECRET: "browser-test-secret-at-least-32-characters",
-        PORT: "3000",
-        CORS_ORIGIN: "http://localhost:3001",
+        PORT: apiPort,
+        CORS_ORIGIN: webUrl,
         SEED_PASSWORD: "browser-test-password",
         NODE_ENV: "development",
       },
@@ -37,7 +38,8 @@ export default defineConfig({
     {
       command: "pnpm --filter frontend start",
       cwd: resolve(__dirname, "../.."),
-      url: "http://localhost:3001",
+      url: webUrl,
+      env: { PORT: webPort },
       reuseExistingServer: false,
       timeout: 60000,
     },

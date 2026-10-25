@@ -9,6 +9,7 @@ import {
   usePatients,
   useUpdatePatient,
 } from "@/hooks/use-patients";
+import { formatBirthDate } from "@/lib/birth-date";
 import {
   type RegisterPatientInput,
   registerPatientSchema,
@@ -88,7 +89,7 @@ export function PatientProfile() {
               <dt className="text-xs text-muted-foreground">{label}</dt>
               <dd className="mt-1 break-words text-sm font-medium">
                 {key === "dob"
-                  ? new Date(patient.dob).toLocaleDateString()
+                  ? formatBirthDate(patient.dob)
                   : patient[key] || "Not provided"}
               </dd>
             </div>

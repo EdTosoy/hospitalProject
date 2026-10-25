@@ -29,7 +29,7 @@ export function AddPatientModal({ isOpen, onClose }: AddPatientModalProps) {
     registerPatient.mutate(
       {
         ...data,
-        dob: new Date(data.dob).toISOString(),
+        dob: data.dob,
       },
       {
         onSuccess: () => {

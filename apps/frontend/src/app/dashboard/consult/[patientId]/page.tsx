@@ -15,6 +15,7 @@ import {
   useCreateConsultNote,
 } from "@/hooks/use-consult-notes";
 import { usePatients } from "@/hooks/use-patients";
+import { formatBirthDate } from "@/lib/birth-date";
 import { useAuthStore } from "@/stores/auth-store";
 
 const emptyNote = { subjective: "", objective: "", assessment: "", plan: "" };
@@ -106,7 +107,7 @@ export default function ConsultPage() {
           <div>
             <dt className="text-xs text-muted-foreground">Date of birth</dt>
             <dd className="mt-1 text-sm font-semibold">
-              {new Date(patient.dob).toLocaleDateString()}
+              {formatBirthDate(patient.dob)}
             </dd>
           </div>
           <div>

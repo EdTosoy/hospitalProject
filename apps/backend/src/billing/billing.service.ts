@@ -5,7 +5,8 @@ import {
 } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.service';
-import { billings, appointments } from '../database/schema';
+import { billings } from '../database/schema';
+import { validateAppointmentLink } from '../database/appointment-integrity';
 import { found, Actor } from '../database/access';
 import { CreateBillingDto } from './dto/create-billing.dto';
 import { UpdateBillingDto } from './dto/update-billing.dto';
@@ -32,28 +33,16 @@ const minor = (amount: number) => {
 @Injectable()
 export class BillingService {
   constructor(private readonly database: DatabaseService) {}
-  private async validateAppointment(
-    patientId: string,
-    appointmentId?: string | null,
-  ) {
-    if (appointmentId) {
-      const appointment = await this.database.db.query.appointments.findFirst({
-        where: eq(appointments.id, appointmentId),
-      });
-      if (!appointment || appointment.patientId !== patientId)
-        throw new BadRequestException('Appointment does not match the patient');
-    }
-  }
   async create(dto: CreateBillingDto, actor: Actor) {
-    await this.validateAppointment(dto.patientId, dto.appointmentId);
     return present(
       await this.database.audit(
         actor,
         'Billing',
         'CREATE',
         Object.keys(dto),
-        async (tx) =>
-          (
+        async (tx) => {
+          await validateAppointmentLink(tx, dto.patientId, dto.appointmentId);
+          return (
             await tx
               .insert(billings)
               .values({
@@ -63,7 +52,8 @@ export class BillingService {
                 paidAt: dto.status === 'PAID' ? new Date() : null,
               })
               .returning()
-          )[0],
+          )[0];
+        },
       ),
     );
   }
@@ -105,10 +95,28 @@ export class BillingService {
           );
           const legacy =
             existing.amountMinor === null || existing.currency === null;
+          const moneyConfirmation =
+            dto.amount !== undefined &&
+            dto.currency === 'PHP' &&
+            Object.keys(dto).every((key) =>
+              ['amount', 'currency'].includes(key),
+            );
+          if (legacy && existing.status === 'PAID' && !moneyConfirmation)
+            throw new ConflictException(
+              'Paid legacy review may only confirm amount and PHP currency',
+            );
           if (legacy && (dto.amount === undefined || dto.currency !== 'PHP'))
             throw new ConflictException(
               'Review this legacy bill: explicitly confirm its PHP amount and currency before updating it',
             );
+          // An identical explicit confirmation is safe to retry after review won a race.
+          if (
+            !legacy &&
+            existing.status === 'PAID' &&
+            moneyConfirmation &&
+            minor(dto.amount!) === existing.amountMinor
+          )
+            return existing;
           if (
             !legacy &&
             existing.status === 'PAID' &&
@@ -126,7 +134,8 @@ export class BillingService {
             dto.status !== 'CANCELLED'
           )
             throw new ConflictException('Cancelled bills cannot be reopened');
-          await this.validateAppointment(
+          await validateAppointmentLink(
+            tx,
             dto.patientId ?? existing.patientId,
             dto.appointmentId === undefined
               ? existing.appointmentId

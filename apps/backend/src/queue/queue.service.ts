@@ -158,8 +158,17 @@ export class QueueService {
     );
   }
   async remove(id: string, actor: Actor) {
-    return this.database.audit(actor, 'Queue', 'DELETE', [], async (tx) =>
-      found((await tx.delete(queues).where(eq(queues.id, id)).returning())[0]),
-    );
+    return this.database.audit(actor, 'Queue', 'DELETE', [], async (tx) => {
+      const existing = found(
+        (
+          await tx.select().from(queues).where(eq(queues.id, id)).for('update')
+        )[0],
+      );
+      if (['COMPLETED', 'NO_SHOW'].includes(existing.status))
+        throw new ConflictException('Closed queue history cannot be deleted');
+      return found(
+        (await tx.delete(queues).where(eq(queues.id, id)).returning())[0],
+      );
+    });
   }
 }

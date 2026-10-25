@@ -1,7 +1,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { eq, desc } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.service';
-import { consultNotes, appointments } from '../database/schema';
+import { consultNotes } from '../database/schema';
+import { validateAppointmentLink } from '../database/appointment-integrity';
 import {
   Actor,
   found,
@@ -13,25 +14,6 @@ import { UpdateConsultNoteDto } from './dto/update-consult-note.dto';
 @Injectable()
 export class ConsultNotesService {
   constructor(private readonly database: DatabaseService) {}
-  private async validateAppointment(
-    patientId: string,
-    doctorId: string,
-    appointmentId?: string | null,
-  ) {
-    if (appointmentId) {
-      const appointment = await this.database.db.query.appointments.findFirst({
-        where: eq(appointments.id, appointmentId),
-      });
-      if (
-        !appointment ||
-        appointment.patientId !== patientId ||
-        (appointment.doctorId && appointment.doctorId !== doctorId)
-      )
-        throw new BadRequestException(
-          'Appointment does not match the patient and doctor',
-        );
-    }
-  }
   private content(data: {
     subjective?: string | null;
     objective?: string | null;
@@ -47,25 +29,27 @@ export class ConsultNotesService {
   }
   async create(dto: CreateConsultNoteDto, actor: Actor) {
     this.content(dto);
-    await this.validateAppointment(
-      dto.patientId,
-      actor.userId,
-      dto.appointmentId,
-    );
     return this.database.audit(
       actor,
       'ConsultNote',
       'CREATE',
       Object.keys(dto),
-      async (tx) =>
-        found(
+      async (tx) => {
+        await validateAppointmentLink(
+          tx,
+          dto.patientId,
+          dto.appointmentId,
+          actor.userId,
+        );
+        return found(
           (
             await tx
               .insert(consultNotes)
               .values({ ...dto, doctorId: actor.userId })
               .returning()
           )[0],
-        ),
+        );
+      },
     );
   }
   findAll() {
@@ -109,12 +93,13 @@ export class ConsultNotesService {
         );
         requireOwner(actor, existing.doctorId);
         this.content({ ...existing, ...data });
-        await this.validateAppointment(
+        await validateAppointmentLink(
+          tx,
           data.patientId ?? existing.patientId,
-          existing.doctorId,
           data.appointmentId === undefined
             ? existing.appointmentId
             : data.appointmentId,
+          existing.doctorId,
         );
         return found(
           (
