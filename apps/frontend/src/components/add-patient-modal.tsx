@@ -199,7 +199,7 @@ export function AddPatientModal({ isOpen, onClose }: AddPatientModalProps) {
             <button
               type="submit"
               disabled={registerPatient.isPending}
-              className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+              className="w-full py-3 bg-brand text-brand-foreground rounded-lg font-medium hover:bg-brand/90 disabled:opacity-50 transition-colors"
             >
               {registerPatient.isPending
                 ? "Registering..."
