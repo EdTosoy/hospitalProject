@@ -118,7 +118,7 @@ export default function LoginForm() {
           <button
             type="submit"
             disabled={login.isPending}
-            className="w-full py-3 bg-brand text-brand-foreground rounded-lg font-medium hover:bg-brand/90 disabled:opacity-50 transition-colors"
+            className="w-full py-3 bg-brand text-brand-soft rounded-lg font-medium hover:bg-brand/90 disabled:opacity-50 transition-colors"
           >
             {login.isPending ? "Signing in..." : "Sign In"}
           </button>

@@ -179,7 +179,7 @@
     @apply block min-h-11 w-full rounded-lg border border-input bg-white px-3 py-2 text-base sm:text-sm text-foreground transition-colors focus:border-primary;
   }
   .btn-primary {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-foreground transition-colors hover:bg-brand/90 disabled:opacity-50;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-brand-soft transition-colors hover:bg-brand/90 disabled:opacity-50;
   }
   .btn-secondary {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:opacity-50;
