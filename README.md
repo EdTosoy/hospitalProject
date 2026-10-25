@@ -59,6 +59,12 @@ See [the code-quality repair report](docs/code-quality-fixes.md) for verified fi
 
 ## Docker baseline
 
+The isolated, preparation-only EC2/Compose option is documented in the
+[AWS demo preparation report](docs/aws-demo-preparation.md) and
+[operator runbook](deploy/aws-demo/README.md). It targets a separately verified
+AWS Free-plan account; the historical Kubernetes/Terraform deployment below
+must not be used as a shortcut. Phase 3A does not authorize provisioning.
+
 ```sh
 cp .env.example .env
 # Configure database values, JWT_SECRET, and optional pgAdmin credentials.

@@ -1,0 +1,85 @@
+name: Prepare abox ARM64 images (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish verified images to GHCR (requires separate owner authorization)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: abox-images-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  arm64:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    env:
+      NODE_IMAGE: node:22-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Set SHA image names
+        shell: bash
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "BACKEND_IMAGE=ghcr.io/$owner/abox-backend:sha-$GITHUB_SHA" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE=ghcr.io/$owner/abox-frontend:sha-$GITHUB_SHA" >> "$GITHUB_ENV"
+      - name: Build ARM64 production images off the EC2 host
+        run: |
+          test "$(uname -m)" = aarch64
+          docker buildx build --platform linux/arm64 --load --build-arg NODE_IMAGE="$NODE_IMAGE" --label org.opencontainers.image.revision="$GITHUB_SHA" -f Dockerfile.backend -t "$BACKEND_IMAGE" .
+          docker buildx build --platform linux/arm64 --load --build-arg NODE_IMAGE="$NODE_IMAGE" --build-arg NEXT_PUBLIC_API_URL=https://api.abox.edtosoy.com --label org.opencontainers.image.revision="$GITHUB_SHA" -f Dockerfile.frontend -t "$FRONTEND_IMAGE" .
+      - name: Exercise native ARM modules and migration packaging without a database
+        run: |
+          docker run --rm --network none --entrypoint node "$BACKEND_IMAGE" -e 'const fs=require("node:fs"); if(process.arch!=="arm64"||!fs.existsSync("dist/src/database/migrate.js")||!fs.existsSync("drizzle/meta/_journal.json"))process.exit(1); require("bcrypt").hashSync("synthetic-build-probe",4); console.log("ARM64 backend/native module/package checks passed");'
+          docker run --rm --network none --workdir /app/apps/frontend --entrypoint node "$FRONTEND_IMAGE" -e 'if(process.arch!=="arm64")process.exit(1); require("sharp")({create:{width:1,height:1,channels:4,background:"#00ada7"}}).png().toBuffer().then(()=>console.log("ARM64 frontend/native module check passed"));'
+      - name: Log in to GHCR only for explicitly requested publication
+        if: inputs.publish
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Refuse reuse of an existing SHA tag
+        if: inputs.publish
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.error
+          owner = os.environ['GITHUB_REPOSITORY_OWNER'].lower()
+          tag = 'sha-' + os.environ['GITHUB_SHA']
+          for package in ['abox-backend', 'abox-frontend']:
+              url = f'https://api.github.com/users/{owner}/packages/container/{package}/versions?per_page=100'
+              while url:
+                  request = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + os.environ['GHCR_TOKEN'], 'Accept': 'application/vnd.github+json'})
+                  try:
+                      response = urllib.request.urlopen(request)
+                  except urllib.error.HTTPError as error:
+                      if error.code == 404:
+                          break
+                      raise SystemExit('Registry inspection denied/failed; publication refused')
+                  versions = json.load(response)
+                  if any(tag in item.get('metadata', {}).get('container', {}).get('tags', []) for item in versions):
+                      raise SystemExit('SHA tag already exists; refusing overwrite')
+                  import re
+                  link = re.search(r'<([^>]+)>; rel="next"', response.headers.get('Link', ''))
+                  url = link.group(1) if link else None
+          PY
+      - name: Publish write-once SHA tags and record immutable digests
+        if: inputs.publish
+        run: |
+          docker push "$BACKEND_IMAGE"
+          docker push "$FRONTEND_IMAGE"
+          docker buildx imagetools inspect "$BACKEND_IMAGE"
+          docker buildx imagetools inspect "$FRONTEND_IMAGE"

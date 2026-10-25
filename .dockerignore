@@ -13,6 +13,14 @@ node_modules
 **/*.tfstate*
 **/test-results/
 **/playwright-report/
+**/*.tfvars
+**/*.tfplan
+**/backend.hcl
+**/__pycache__/
+**/release.env
+**/backup.env
+**/secrets/
+**/*.dump
 .aws/
 .codex/
 .agents/

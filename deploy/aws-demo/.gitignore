@@ -1,0 +1,8 @@
+release.env
+backup.env
+secrets/
+__pycache__/
+*.dump
+*.sql
+!init-db.sh
+
