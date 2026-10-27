@@ -1,0 +1,8 @@
+__pycache__/
+.terraform/
+*.tfvars
+backend_override.tf
+backend.hcl
+*.tfplan
+*.tfstate*
+crash*.log

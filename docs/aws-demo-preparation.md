@@ -1,5 +1,11 @@
 # abox — Phase 3A AWS demo preparation
 
+**State-storage update (2026-10-28):** the [dedicated S3 backend preparation](../infra/aws-state/README.md)
+supersedes the local-backend design below. Both remote state and protected local
+plan handling remain NO-GO until separately approved bootstrap and verified
+encrypted workspace requirements are met. This historical report is not current
+authorization to initialize a backend or provision resources.
+
 Prepared 2026-10-25 on `main`, starting at `83853cb161fee47cc98a930251db839667f86d20`.
 The initial working tree was clean. The owner's latest button-color and generated
 framework-instruction commit is preserved. No application source, historical

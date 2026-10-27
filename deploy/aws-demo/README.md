@@ -1,5 +1,10 @@
 # abox AWS demo operations
 
+**State-storage update:** use the prepared [dedicated S3 backend runbook](../../infra/aws-state/README.md).
+It supersedes the local-backend commands below. Local plans and temporary state
+still require verified encrypted external storage; NO-GO remains in force. No
+bootstrap creation or migration is authorized by these preparation files.
+
 **Phase 3A is files and local verification only. Do not execute provisioning,
 publication, or host deployment commands during Phase 3A.** The new account will
 be configured later. No default/Flow account may be used.

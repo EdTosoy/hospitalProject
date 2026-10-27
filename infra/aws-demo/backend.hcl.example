@@ -1,0 +1,3 @@
+# Supply the actual output of the separately approved bootstrap stack.
+# No credentials here. Account, region, state key and locking are fixed in versions.tf.
+bucket = "REPLACE_WITH_BOOTSTRAP_STATE_BUCKET"

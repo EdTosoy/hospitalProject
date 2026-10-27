@@ -1,9 +1,17 @@
 terraform {
   required_version = ">= 1.10, < 2.0"
 
-  # Phase 3B: initialize with an absolute path on operator-controlled encrypted
-  # storage outside this repository. Phase 3A uses init -backend=false only.
-  backend "local" {}
+  # Prepared only: bucket bootstrap and backend initialization require approval.
+  # Backend credentials are independent of the provider's account enforcement.
+  # Work only in an encrypted external directory: plans/error state remain local.
+  backend "s3" {
+    region              = "ap-southeast-1"
+    profile             = "abox-747240980964"
+    allowed_account_ids = ["747240980964"]
+    key                 = "abox/aws-demo/terraform.tfstate"
+    encrypt             = true
+    use_lockfile        = true
+  }
 
   required_providers {
     aws = {
