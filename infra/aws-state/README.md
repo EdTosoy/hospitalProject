@@ -5,6 +5,11 @@ policy, backend initialization against S3, state migration or real AWS plan was
 performed. The previous Singapore SCP denial remains unresolved. Local schema
 validation and mocked tests do not prove AWS permissions or locking operation.
 
+The [updated readiness review](../../docs/aws-ec2-readiness-2026-10-28.md)
+identifies an assigned-project-region restriction as the likely explanation, not
+a blanket EC2 Free-plan ban. Keep Singapore pinned until the owner independently
+confirms it is permitted; this applies to the state bucket as well as EC2.
+
 ## Design
 
 Use Terraform throughout. This separate bootstrap root creates one dedicated S3
@@ -52,6 +57,13 @@ version reads/deletion, bucket administration, other-root access or role assumpt
 Only the default workspace is supported. Do not use `-lock=false`, `workspace new`
 or `force-unlock` to resolve permission/concurrency problems.
 
+Terraform 1.15.3 attempts a workspace-prefix list during initialization; its
+[default-workspace fallback](https://github.com/hashicorp/terraform/blob/v1.15.3/internal/backend/remote-state/s3/backend_state.go)
+handles `AccessDenied` for the default `env:` workspace prefix. Keep that default
+prefix and the narrow state/lock listing policy; do not widen bucket-wide access
+to suppress workspace discovery warnings. This behavior was source-reviewed,
+not tested against a real bucket. Recheck it when upgrading Terraform.
+
 Role selection/trust and policy attachment require a later review and explicit
 approval. Never attach state access to the application's EC2 role. Attaching a
 narrow policy to `AccountFullAccessRole` does **not** remove its broader permissions;
@@ -79,6 +91,8 @@ Before any real bootstrap plan/apply or migration, provide an existing encrypted
 external volume (for example LUKS2), verify its backing encryption, and keep its
 unlock/recovery key outside the repository. The currently visible ext4 disks do
 not satisfy this gate. Creating/formatting a volume is a separate authorized task.
+The [NixOS LUKS workspace proposal](luks-workspace.md) inventories the available
+tools and prepares a regular-file container procedure without changing partitions.
 
 Run Terraform from a complete working copy **on that volume**, with its current
 directory, `TF_DATA_DIR`, `TMPDIR`, plans and exported state all inside it. Permissions
@@ -153,6 +167,10 @@ terraform init -migrate-state -backend-config=backend.hcl
 This is an interactive migration; inspect the source/destination and answer only
 after confirming they match the approval. Never combine `-reconfigure` with migration,
 never use `-force-copy`, and preserve the encrypted source/backup until verified.
+Confirm no other operator is active and inventory all local/destination state
+objects first. After migration, compare lineage, serial and resource addresses
+using protected files on the encrypted volume; verify S3 AES256/versioning and
+successful normal lock/unlock. Keep an encrypted offline source copy until accepted.
 The [override-file semantics](https://developer.hashicorp.com/terraform/language/files/override)
 replace the backend block; future bootstrap maintenance must retain this override.
 The application has no known state from this task. Inventory any existing state
@@ -208,3 +226,9 @@ Executed 2026-10-28 (local date):
 CloudFormation was evaluated as a way to avoid local bootstrap state, but the
 prepared implementation stays with Terraform. No CloudFormation artifacts,
 validator installation or extra project dependencies are required.
+
+In the latest local remediation review, both root validations, all three mocked
+security tests, formatting and the expanded 14-test offline deployment suite were
+executed successfully again. No IAM attachment, live native lock contention,
+S3 recovery, real plan or migration was performed. Scope/role selection and the
+assigned-region boundary must independently pass before this design becomes GO.

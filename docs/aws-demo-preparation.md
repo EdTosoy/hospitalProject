@@ -122,9 +122,10 @@ trial is advertised through December 31, 2026, but that is not a reason to upgra
 [new EC2 Free Tier model](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-free-tier-usage.html),
 [T4g offer FAQ](https://aws.amazon.com/ec2/faqs/).
 
-The prepared `preflight.py` checks only after explicit profile/account input:
-identity first, FREE/ACTIVE state, minimum $50 credit balance, at least 37 days to
-plan expiry, T4g small ARM64/2-GiB specification, Singapore AZ offering, at least
+The updated `preflight.py` checks only after explicit profile/account input:
+identity first, FREE/ACTIVE state, minimum $75 credit balance, at least 69 days to
+both plan expiry and the owner-verified earliest credit expiry supplied with
+`--credit-expiration-date`, T4g small ARM64/2-GiB specification, Singapore AZ offering, at least
 2 Standard On-Demand vCPUs, and public AMI parameter access. It writes a private
 three-hour approval with an account hash and runway assertion, not raw billing
 amounts or identity/credentials. It fails closed on denied/unknown checks. It

@@ -28,9 +28,9 @@ Before **any** resource creation or image publication, obtain an explicit Phase
    dedicated MFA-backed `abox-*` CLI profile. Do not create root access keys or
    bootstrap Organizations/Identity Center as a shortcut. No existing profile is
    assumed to be the correct account.
-2. Verify FREE/ACTIVE, at least $50 in available credits, at least 37 days before
-   account-plan expiry for a 30-day demo plus margin, and the actual expiry of
-   credits. Confirm EC2/T4g, gp3 encryption, S3, SSM Session Manager, and standard
+2. Verify FREE/ACTIVE, at least $75 in available credits ($50 for two months plus
+   a $25 reserve), at least 69 days before both plan and earliest usable-credit
+   expiry (62 demo days plus seven-day margin). Confirm EC2/T4g, gp3 encryption, S3, SSM Session Manager, and standard
    Parameter Store availability under Free. If any requires Paid, **stop**.
 3. Owner confirms vCPU quota of at least 2, available T4g small capacity/AZ,
    supported AL2023 ARM64 AMI, the monthly gross-cost budget, notifications, and a
@@ -68,6 +68,7 @@ chmod 700 "$ABOX_PRIVATE_DIR"
 python3 deploy/aws-demo/preflight.py \
   --profile abox-free \
   --expected-account-id OWNER_CONFIRMED_ACCOUNT_ID \
+  --credit-expiration-date "${ABOX_CREDIT_EXPIRATION_DATE:?Set owner-verified earliest credit expiry YYYY-MM-DD}" \
   --output "$ABOX_PRIVATE_DIR/account-approval.json"
 ```
 

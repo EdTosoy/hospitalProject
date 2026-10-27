@@ -11,6 +11,17 @@ from common import ROOT, compose, config, host_identity, owner_approval, pg
 from backup import backup
 
 
+def activate_release():
+    # ROOT is /opt/abox/releases/<revision>, so two parents is /opt/abox.
+    # Backup/restore entrypoints must share this stable link across rollbacks.
+    current = ROOT.parent.parent / "current"
+    replacement = current.with_name("current.next")
+    if replacement.exists() or replacement.is_symlink():
+        raise RuntimeError("Unexpected pending release symlink; inspect manually")
+    replacement.symlink_to(ROOT)
+    replacement.replace(current)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--confirm-synthetic-demo", action="store_true", required=True)
@@ -49,12 +60,7 @@ def main():
             raise RuntimeError("Initial demo seed requires an empty user table")
         compose("--profile", "maintenance", "run", "--rm", "--no-deps", "seed")
     compose("up", "-d", "--wait", "backend", "frontend", "caddy")
-    current = ROOT.parent.parent / "current"
-    replacement = current.with_name("current.next")
-    if replacement.exists() or replacement.is_symlink():
-        raise RuntimeError("Unexpected pending release symlink; inspect manually")
-    replacement.symlink_to(ROOT)
-    replacement.replace(current)
+    activate_release()
     print("Release is healthy; current symlink updated. Verify HTTPS/login from a browser.")
 
 

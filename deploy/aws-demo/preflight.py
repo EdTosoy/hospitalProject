@@ -8,6 +8,11 @@ import os
 import pathlib
 import re
 import subprocess
+from decimal import Decimal, InvalidOperation
+
+DEMO_DAYS = 62
+SHUTDOWN_MARGIN_DAYS = 7
+MINIMUM_CREDITS = Decimal("75")  # Two $25 gross months plus a $25 reserve.
 
 
 def main():
@@ -15,6 +20,8 @@ def main():
     parser.add_argument("--profile", required=True)
     parser.add_argument("--expected-account-id", required=True)
     parser.add_argument("--output", type=pathlib.Path, required=True)
+    parser.add_argument("--credit-expiration-date", required=True,
+                        help="Owner-verified earliest usable credit expiry from Billing, YYYY-MM-DD")
     args = parser.parse_args()
     if not re.fullmatch(r"abox-[a-z0-9-]+", args.profile) or not re.fullmatch(r"[0-9]{12}", args.expected_account_id):
         raise RuntimeError("Use a dedicated abox-* profile and an owner-confirmed account ID")
@@ -37,7 +44,11 @@ def main():
     now = dt.datetime.now(dt.timezone.utc)
     expiry = dt.datetime.fromisoformat(plan["accountPlanExpirationDate"].replace("Z", "+00:00"))
     credits = plan.get("accountPlanRemainingCredits", {})
-    if credits.get("unit") != "USD" or float(credits.get("amount", 0)) < 50 or expiry - now < dt.timedelta(days=37):
+    credit_expiry = dt.datetime.combine(dt.date.fromisoformat(args.credit_expiration_date), dt.time(), dt.timezone.utc)
+    amount = Decimal(str(credits.get("amount", 0)))
+    required_window = dt.timedelta(days=DEMO_DAYS + SHUTDOWN_MARGIN_DAYS)
+    if (credits.get("unit") != "USD" or not amount.is_finite() or amount < MINIMUM_CREDITS
+            or min(expiry, credit_expiry) - now < required_window):
         raise RuntimeError("Insufficient credit/expiry safety margin; do not launch")
     instance = read("ec2", "describe-instance-types", "--instance-types", "t4g.small")["InstanceTypes"][0]
     if instance["MemoryInfo"]["SizeInMiB"] != 2048 or "arm64" not in instance["ProcessorInfo"]["SupportedArchitectures"]:
@@ -69,5 +80,5 @@ if __name__ == "__main__":
         main()
     except subprocess.CalledProcessError:
         raise SystemExit("Read-only AWS preflight denied/failed; no approval written. Credentials and account responses withheld.")
-    except (RuntimeError, KeyError, ValueError) as error:
+    except (RuntimeError, KeyError, ValueError, InvalidOperation) as error:
         raise SystemExit(str(error) if isinstance(error, RuntimeError) else "Incomplete account response; no approval written")

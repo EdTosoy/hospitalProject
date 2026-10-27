@@ -6,6 +6,93 @@ planning. Full EC2 remains the selected platform; Lightsail is reserved for FATS
 This audit made no AWS resource changes, DNS changes, image publications, commits,
 pushes, or account-plan changes. Only synthetic build probes were used.
 
+## Latest local Phase 3B remediation review
+
+Reviewed starting from clean commit `3e4ab11`; no commits/pushes, AWS API calls,
+resource mutations, DNS changes, image publication, formatting or privileged
+configuration changes were made in this review. The account/billing observations
+below remain the earlier evidence, not newly refreshed measurements.
+
+| Blocker | Root cause and current status |
+| --- | --- |
+| Singapore SCP denials | EC2 is supported by the Free experience. A managed-project regional restriction strongly explains the cross-service denials; exact attached policy/selected region still unverified. BLOCKED for Singapore. |
+| Sharp native probe | Test used frontend-level resolution for a Next.js transitive dependency. FIXED locally by resolving from Next's package context; actual PNG encode/decode and standalone HTTP optimization pass on cached amd64. Updated native ARM64 run remains NOT RUN. |
+| Release/backup path conflict | Earlier report was incorrect: two parents from `/opt/abox/releases/<SHA>` is `/opt/abox`. No production path correction was necessary. RESOLVED by four real-filesystem regression tests and explicit activation helper. |
+| Two-month runway assertion | Previous guard accepted a 30-day window. FIXED to require $75, 69 days, and explicit owner-verified earliest usable credit expiry. Actual expiry still needs Billing verification. |
+| Encrypted workspace | Tool inventory/procedure prepared; CLI absent from PATH, swap active, backing storage unencrypted. NOT ACTIVATED; NO-GO. |
+| Remote state | Local schema/mocked security tests pass; backend account pins, versioning, exact-key policies and migration design retained. Live S3 permissions, locking, recovery, scoped role selection and migration remain NOT RUN. |
+
+AWS's [supported Free services](https://docs.aws.amazon.com/accounts/latest/reference/supported-services-sign-up-new.html)
+include EC2, S3, SSM and Service Quotas. For its new managed-project experience,
+[region documentation](https://docs.aws.amazon.com/accounts/latest/reference/project-regions.html)
+limits regional resources to an assigned region; Sydney is one possible assignment,
+Singapore is not listed. The earlier profile default is Sydney. AWS's
+[published managed policies](https://docs.aws.amazon.com/accounts/latest/reference/scps-and-rcps-for-projects.html)
+include `RegionFloor`, which denies most actions outside selected/exception regions,
+and permits EC2 at the Free-service layer. This is strong evidence of a regional
+boundary, not a blanket Free-plan EC2 prohibition or merely a missing IAM allow.
+It is not proof that unreadable policy `p-7z6oj8hf` exactly matches today's published
+policy. All four observed denied actions span EC2, SSM and Service Quotas in the
+same disallowed region. Existing global billing/IAM successes do not prove regional
+access. No alternate-region probe, SCP edit, advanced-feature activation or upgrade
+was attempted. Owner must inspect **AWS Settings → Project → Overview → Additional
+Info → Region** and obtain authoritative policy/support confirmation. Keep Singapore
+pinned; a region change requires a separate explicit user decision and re-review.
+
+The Sharp failure was reproduced both in local pnpm resolution and the cached
+`abox-frontend:phase3a-check` production image: direct `require("sharp")` fails,
+while `createRequire(require.resolve("next/package.json"))("sharp")` succeeds.
+Sharp 0.35.5 is packaged under Next's dependency context. The new shared probe
+checks architecture and actual PNG encode/decode without loosening assertions or
+adding dependencies. The same cached image successfully served `/login` and
+`/_next/image?url=%2Fbrand%2Fabox-symbol.png&w=64&q=75`, returning an image of
+width 64. No network or host ports were enabled. Image application source was not
+changed. This establishes packaging/runtime correctness on amd64, not native ARM.
+Do not rerun the old remote workflow and claim it tested this uncommitted fix.
+
+Exact changed files in this review:
+
+- `.github/workflows/abox-images.yml`, `deploy/aws-demo/check-frontend-image.cjs`:
+  shared native image probe with correct dependency resolution.
+- `deploy/aws-demo/release.py`, `deploy/aws-demo/test_safety.py`: explicit atomic
+  activation helper, stable backup/restore entrypoint tests, upgrade/rollback,
+  candidate DB selection and pending/dangling-link protection; updated runway tests.
+- `deploy/aws-demo/preflight.py`, `infra/aws-demo/variables.tf`: two-month credit
+  gate, finite Decimal balance handling and accurate managed-region guard wording.
+- `infra/aws-state/luks-workspace.md`: proposed regular-file LUKS2 workspace and
+  independent encryption/swap acceptance gates; no execution.
+- `deploy/aws-demo/README.md`, `docs/aws-demo-preparation.md`,
+  `infra/aws-state/README.md`, this report: current prerequisites, procedure and
+  corrected historical findings/commands.
+
+Executed verification in this review:
+
+| Check | Result |
+| --- | --- |
+| `python3 -m unittest discover -s deploy/aws-demo -p 'test_*.py' -v` | PASS: 14 tests; filesystem symlinks/imports are real, AWS/Docker operations are not invoked |
+| `node --check deploy/aws-demo/check-frontend-image.cjs` | PASS |
+| Shared image probe mounted in cached production image, network disabled, explicit `x64` argument | PASS: actual Sharp PNG encode/decode |
+| Same probe with `arm64` required on the amd64 image | PASS: fails with architecture mismatch, preserving the native gate |
+| Isolated cached standalone frontend server, `/login` and real `/_next/image` | PASS: 200 image response, decoded width 64; no published ports/network |
+| Credential-disabled `terraform validate` for `infra/aws-state` and `infra/aws-demo` | PASS |
+| Credential-disabled `terraform -chdir=infra/aws-state test -no-color` | PASS: three plan-only mocked tests, eight assertions; not an AWS plan |
+| `terraform fmt -check infra/aws-demo`, `terraform fmt -check -recursive infra/aws-state` | PASS |
+| Compose config with synthetic SHA/digest pins | PASS: six ARM64 services, only Caddy 80/443, private app/DB, maintenance migrator |
+| `bash -n infra/aws-demo/user-data.sh deploy/aws-demo/init-db.sh` | PASS |
+| Proposed LUKS shell snippet parsed with `bash -n` | PASS: syntax only; no setup commands executed |
+| `git diff --check` | PASS |
+| Corrected native ARM64 workflow | NOT RUN: changed local workflow cannot execute remotely without separately publishing the source; local builder is amd64-only |
+| AWS permissions/quotas, live TLS/SSM/backup/recovery, encrypted-workspace activation, actual Terraform plan/migration | NOT RUN: independent gates remain |
+
+Next safe step is read-only confirmation of the project's assigned region in
+AWS Settings, alongside review of the [LUKS proposal](../infra/aws-state/luks-workspace.md).
+After explicit local setup approval and verified encryption/swap protections,
+prepare/review the **bootstrap-only plan** per the state runbook, if the account
+permits the target region. Bucket creation and state migration each still require
+their own explicit approval. The corrected native workflow needs a later owner
+authorized commit/push or another approved native ARM environment. No deployment
+gate is waived by passing these local tests.
+
 ## Verified target and billing
 
 - Started with a clean working tree at `9ce67b53646a178eb5c47701730ce3b974737664`.
@@ -49,8 +136,9 @@ IAM permissions alone cannot override this explicit SCP deny.
 `organizations describe-organization` reports organization `o-84b00ga58n`.
 This observation and FREE/ACTIVE are both actual API results. It does not establish
 who arranged membership or justify changing account plans. The Terraform variable
-description currently requires no Organizations membership; that policy assumption
-must be reconciled with the account's actual operating arrangement before approval.
+description has now been corrected: AWS-managed project organization membership
+is compatible with the new Free experience, but user-initiated organization/plan
+changes remain prohibited. Assigned-region permission must be confirmed before approval.
 No organization, SCP, or plan change was attempted or proposed as an automatic fix.
 
 The public Price List API lists Singapore `t4g.small` as Graviton2, 2 vCPU, 2 GiB,
@@ -92,20 +180,20 @@ backup, restore, TLS issuance or host release was executed in this audit.
 
 Additional findings requiring resolution:
 
-1. **Native frontend check fails.** Both production images build natively on ARM64;
+1. **Historical native frontend check failed; harness repaired locally.** Both production images build natively on ARM64;
    backend architecture, bcrypt and migration packaging pass. The subsequent
    frontend probe fails with `MODULE_NOT_FOUND: sharp` from
    `/app/apps/frontend/[eval]`. The frontend declares Next.js, with Sharp transitive
    through Next; this failure alone does not distinguish a probe resolution error
-   from missing runtime packaging. Resolve and rerun before publication.
-2. **Backup timer path mismatch.** With the documented layout
+   from missing runtime packaging. The latest review above establishes correct
+   packaging on amd64 and fixes probe resolution; native rerun is still required.
+2. **Correction: no backup timer path mismatch.** With the documented layout
    `/opt/abox/releases/<SHA>/release.py`, `ROOT.parent.parent / "current"` in
-   `release.py:52` resolves to `/opt/abox/releases/current`. The service and runbook
-   use `/opt/abox/current`. The release can claim health while the scheduled backup
-   command points at a missing release. Correct and verify this before host use.
-3. **Runway guard is for 30 days.** `preflight.py` accepts $50 and 37 remaining
-   days. That is not a two-month assertion. It also does not check organization
-   membership, individual grant expiry, secure state, or current quota usage.
+   `release.py` correctly resolves to `/opt/abox/current`, matching the service and
+   runbook. Real-filesystem regression tests now cover release/backup/restore/rollback.
+3. **Runway guard updated.** `preflight.py` now requires $75 and 69 remaining
+   days to both plan and explicitly supplied earliest credit expiry. It still does
+   not independently establish individual grant expiry, secure state or quota usage.
    Do not treat its approval JSON as proof of those prerequisites. Establish a
    two-month window plus shutdown margin and $25 reserve before enabling the guard.
 4. Host bootstrap, restricted egress with package installation, AWS CLI presence,
@@ -199,18 +287,21 @@ cp -n infra/aws-demo/terraform.tfvars "$ABOX_PRIVATE_DIR/demo.tfvars"
 aws --profile abox-747240980964 --region ap-southeast-1 sts get-caller-identity
 python3 deploy/aws-demo/preflight.py \
   --profile abox-747240980964 --expected-account-id 747240980964 \
+  --credit-expiration-date "${ABOX_CREDIT_EXPIRATION_DATE:?Set owner-verified earliest usable credit expiry YYYY-MM-DD}" \
   --output "$ABOX_PRIVATE_DIR/account-approval.json"
-terraform -chdir=infra/aws-demo init -input=false \
-  -backend-config="path=$ABOX_PRIVATE_DIR/terraform.tfstate"
-terraform -chdir=infra/aws-demo validate
-terraform -chdir=infra/aws-demo plan -input=false \
+# Use the encrypted working-copy/bootstrap/migration procedure in infra/aws-state/README.md.
+# These variables must point inside the independently verified encrypted workspace.
+terraform -chdir="$ABOX_PRIVATE_DIR/application" init -input=false \
+  -backend-config="$ABOX_PRIVATE_DIR/application/backend.hcl"
+terraform -chdir="$ABOX_PRIVATE_DIR/application" validate
+terraform -chdir="$ABOX_PRIVATE_DIR/application" plan -input=false \
   -var-file="$ABOX_PRIVATE_DIR/demo.tfvars" \
   -out="$ABOX_PRIVATE_DIR/reviewed.tfplan"
-terraform -chdir=infra/aws-demo show -no-color "$ABOX_PRIVATE_DIR/reviewed.tfplan"
+terraform -chdir="$ABOX_PRIVATE_DIR/application" show -no-color "$ABOX_PRIVATE_DIR/reviewed.tfplan"
 ```
 
 Stop after reviewing that actual plan. Review one instance, Standard CPU credits,
 encrypted 30-GiB gp3, restricted networking/IAM, private encrypted backup storage,
 the correct account and no unrelated resources. No `apply`, publication, DNS or
 host deployment is authorized by this report. Exact host release commands remain
-in `deploy/aws-demo/README.md`, but its backup-path defect must be repaired first.
+in `deploy/aws-demo/README.md`; the earlier backup-path defect report was incorrect.

@@ -12,9 +12,11 @@ import unittest
 from unittest import mock
 import common
 import preflight
+import release
+import shutil
 
 
-class ReleaseConfigTests(unittest.TestCase):
+class ReleaseFixture(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.root = pathlib.Path(self.directory.name)
@@ -35,6 +37,8 @@ class ReleaseConfigTests(unittest.TestCase):
     def write(self):
         (self.root / "release.env").write_text("\n".join(f"{k}={v}" for k, v in self.values.items()))
 
+
+class ReleaseConfigTests(ReleaseFixture):
     def test_rejects_mutable_image_or_wrong_release(self):
         for value in ["ghcr.io/demo/abox-backend:latest", self.values["BACKEND_IMAGE"].replace("sha-1", "sha-2", 1)]:
             self.values["BACKEND_IMAGE"] = value
@@ -64,10 +68,11 @@ class ReleaseConfigTests(unittest.TestCase):
 
 
 class AccountPreflightTests(unittest.TestCase):
-    def execute(self, responses, profile="abox-free"):
+    def execute(self, responses, profile="abox-free", credit_days=100):
         with tempfile.TemporaryDirectory() as directory:
             output = pathlib.Path(directory) / "approval.json"
             argv = ["preflight.py", "--profile", profile, "--expected-account-id", "123456789012", "--output", str(output)]
+            argv += ["--credit-expiration-date", (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=credit_days)).date().isoformat()]
             results = [subprocess.CompletedProcess([], 0, json.dumps(value), "") for value in responses]
             with mock.patch.object(sys, "argv", argv), mock.patch.object(subprocess, "run", side_effect=results) as run, contextlib.redirect_stdout(io.StringIO()):
                 try:
@@ -92,7 +97,7 @@ class AccountPreflightTests(unittest.TestCase):
         self.assertIn("Free plan", error)
 
     def test_insufficient_credit_or_expiry_blocks_approval(self):
-        for amount, days in [(25, 60), (100, 3)]:
+        for amount, days in [(25, 100), (74, 100), (100, 60), (100, 3), ("NaN", 100)]:
             calls, error = self.execute([
                 {"Account": "123456789012"},
                 {"accountPlanType": "FREE", "accountPlanStatus": "ACTIVE", "accountPlanRemainingCredits": {"unit": "USD", "amount": amount}, "accountPlanExpirationDate": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=days)).isoformat()},
@@ -103,7 +108,7 @@ class AccountPreflightTests(unittest.TestCase):
     def test_success_does_not_persist_account_or_credit_amount(self):
         calls, record = self.execute([
             {"Account": "123456789012"},
-            {"accountPlanType": "FREE", "accountPlanStatus": "ACTIVE", "accountPlanRemainingCredits": {"unit": "USD", "amount": 100}, "accountPlanExpirationDate": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=60)).isoformat()},
+            {"accountPlanType": "FREE", "accountPlanStatus": "ACTIVE", "accountPlanRemainingCredits": {"unit": "USD", "amount": 100}, "accountPlanExpirationDate": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=100)).isoformat()},
             {"InstanceTypes": [{"MemoryInfo": {"SizeInMiB": 2048}, "ProcessorInfo": {"SupportedArchitectures": ["arm64"]}}]},
             {"InstanceTypeOfferings": [{"InstanceType": "t4g.small"}]},
             {"Quota": {"Value": 2}},
@@ -113,6 +118,89 @@ class AccountPreflightTests(unittest.TestCase):
         self.assertEqual(record["plan"], "FREE")
         self.assertNotIn("123456789012", json.dumps(record))
         self.assertNotIn("amount", json.dumps(record))
+
+    def test_early_individual_credit_expiry_blocks_even_with_later_plan_expiry(self):
+        calls, error = self.execute([
+            {"Account": "123456789012"},
+            {"accountPlanType": "FREE", "accountPlanStatus": "ACTIVE", "accountPlanRemainingCredits": {"unit": "USD", "amount": 120}, "accountPlanExpirationDate": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=180)).isoformat()},
+        ], credit_days=60)
+        self.assertEqual(calls, 2)
+        self.assertIn("safety margin", error)
+
+
+class ReleasePathTests(ReleaseFixture):
+    def setUp(self):
+        super().setUp()
+        self.home = self.root / "abox"
+        self.bundle = self.home / "releases" / self.values["RELEASE_SHA"]
+        self.bundle.mkdir(parents=True)
+        self.source = pathlib.Path(__file__).resolve().parent
+
+    def install(self, bundle, database="abox_demo"):
+        bundle.mkdir(parents=True, exist_ok=True)
+        for source in self.source.glob("*.py"):
+            shutil.copyfile(source, bundle / source.name)
+        values = {**self.values, "DATABASE_NAME": database}
+        (bundle / "release.env").write_text("\n".join(f"{k}={v}" for k, v in values.items()))
+        return bundle
+
+    def activate(self, bundle):
+        with mock.patch.object(release, "ROOT", bundle):
+            release.activate_release()
+
+    def inspect_entrypoints(self, expected, database="abox_demo"):
+        # Exercise fresh module resolution through the real stable symlink,
+        # as systemd backup and operator restore do; imports never run host ops.
+        script = """
+import json, pathlib, sys
+sys.path.insert(0, sys.argv[1])
+import common, backup, restore
+print(json.dumps({'root':str(common.ROOT),'database':common.config()['DATABASE_NAME'],
+                 'backup':str(pathlib.Path(backup.__file__).resolve().parent),
+                 'restore':str(pathlib.Path(restore.__file__).resolve().parent)}))
+"""
+        result = subprocess.run([sys.executable, "-B", "-c", script, str(self.home / "current")],
+                                check=True, capture_output=True, text=True, cwd="/")
+        actual = json.loads(result.stdout)
+        self.assertEqual(actual, {"root": str(expected), "database": database,
+                                  "backup": str(expected), "restore": str(expected)})
+
+    def test_release_matches_systemd_backup_and_restore_entrypoints(self):
+        self.install(self.bundle)
+        self.activate(self.bundle)
+        self.assertEqual((self.home / "current").resolve(), self.bundle)
+        self.assertFalse((self.home / "releases" / "current").exists())
+        self.assertFalse((self.home / "current.next").is_symlink())
+        unit = (self.source / "abox-backup.service").read_text()
+        self.assertIn("ExecStart=/usr/bin/python3 /opt/abox/current/backup.py", unit)
+        self.inspect_entrypoints(self.bundle)
+
+    def test_upgrade_and_rollback_keep_backup_restore_on_selected_bundle(self):
+        old = self.install(self.bundle)
+        new = self.install(self.home / "releases" / ("2" * 40))
+        for selected in [old, new, old]:
+            self.activate(selected)
+            self.inspect_entrypoints(selected)
+        self.assertTrue(old.is_dir())
+        self.assertTrue(new.is_dir())
+
+    def test_schema_rollback_uses_candidate_database_from_selected_bundle(self):
+        self.install(self.bundle)
+        self.activate(self.bundle)
+        candidate = "abox_restore_20261028080000"
+        rollback = self.install(self.home / "releases" / "rollback-20261028", candidate)
+        self.activate(rollback)
+        self.inspect_entrypoints(rollback, candidate)
+
+    def test_pending_or_dangling_link_blocks_activation_without_changing_current(self):
+        self.install(self.bundle)
+        self.activate(self.bundle)
+        pending = self.home / "current.next"
+        pending.symlink_to(self.home / "missing")
+        with self.assertRaisesRegex(RuntimeError, "pending release symlink"):
+            self.activate(self.bundle)
+        self.assertEqual((self.home / "current").resolve(), self.bundle)
+        self.assertTrue(pending.is_symlink())
 
 
 if __name__ == "__main__":

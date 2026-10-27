@@ -19,7 +19,7 @@ variable "expected_account_id" {
 variable "free_plan_verified" {
   type        = bool
   default     = false
-  description = "Set true only after fresh read-only preflight confirms FREE/ACTIVE, sufficient credits and expiry, permitted services, and no Organizations membership."
+  description = "Set true only after fresh read-only preflight confirms FREE/ACTIVE, two-month credit/expiry runway, and permitted services in Singapore. Verify AWS-managed project region restrictions; never change account plans or organization policies to bypass them."
   validation {
     condition     = var.free_plan_verified
     error_message = "Do not plan/apply until the owner has verified the Free plan, credit runway, service access, and secure state storage. Never upgrade the plan."
