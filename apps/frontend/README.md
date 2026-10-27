@@ -1,6 +1,13 @@
-# Pulse frontend
+# abox frontend
 
 Next.js 16 App Router, React 19, Tailwind 4, Radix primitives, React Hook Form/Zod, React Query, and Zustand. The interface uses shared navigation, form controls, status indicators, and role-specific workflows. Real patient, doctor, staff, admin, and billing workflows use the NestJS API.
+
+Product: **abox — Hospital Management Platform**. Supplied masters and their
+checksums remain in `assets/`; deployed images are in `public/brand/` and
+`public/`. `src/app/favicon.ico` owns the ICO route, `layout.tsx` declares the PNG
+and Apple icons, and `src/app/manifest.ts` owns the home-screen manifest. The
+manifest uses browser display and ordinary icons; no offline or maskable support
+is claimed. See the [brand integration report](../../docs/brand-integration.md).
 
 See [root setup](../../README.md) and [the audit](../../docs/audit.md). Development and local standalone production servers default to http://localhost:3001. Set `NEXT_PUBLIC_API_URL` before building; it is a browser-visible, build-time value.
 

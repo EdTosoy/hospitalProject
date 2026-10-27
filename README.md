@@ -1,6 +1,12 @@
-# Pulse Medical Center
+# abox — Hospital Management Platform
 
 A hospital workflow application: Next.js 16 / React 19 frontend, NestJS 11 API, PostgreSQL 17, and Drizzle ORM. The pnpm 9 workspace uses Turbo for application builds and development. No cloud account is needed for the local baseline.
+
+Approved branding sources are preserved in `apps/frontend/assets/`. The frontend
+uses the supplied abox wordmark, symbol, and device icons. See the
+[brand integration report](docs/brand-integration.md) for asset provenance,
+browser metadata, verification, and known source-quality limitations. Historical
+audit documents retain the product name used when those audits were performed.
 
 ## Local development
 
@@ -52,6 +58,12 @@ New bills use PHP with at most two decimal places and a maximum of PHP 9,999,999
 See [the code-quality repair report](docs/code-quality-fixes.md) for verified fixes and operational limits.
 
 ## Docker baseline
+
+The isolated, preparation-only EC2/Compose option is documented in the
+[AWS demo preparation report](docs/aws-demo-preparation.md) and
+[operator runbook](deploy/aws-demo/README.md). It targets a separately verified
+AWS Free-plan account; the historical Kubernetes/Terraform deployment below
+must not be used as a shortcut. Phase 3A does not authorize provisioning.
 
 ```sh
 cp .env.example .env

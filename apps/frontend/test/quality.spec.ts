@@ -2,9 +2,10 @@ import { randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { expect, type Page, test } from "@playwright/test";
+import { apiUrl, webUrl } from "./support/urls";
 
-const api = "http://localhost:3000";
-const origin = { Origin: "http://localhost:3001" };
+const api = apiUrl;
+const origin = { Origin: webUrl };
 async function login(page: Page, email: string) {
   await page.goto("/login");
   await page.getByLabel("Email", { exact: true }).fill(email);

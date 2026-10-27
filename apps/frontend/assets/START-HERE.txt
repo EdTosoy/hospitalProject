@@ -1,0 +1,4 @@
+01-symbol: recommended browser favicon.
+02-light-tile / 03-dark-tile: original tile compositions including outer margins.
+04-wordmark: square-padded; text too small for browser tabs.
+Originals preserved unchanged. Source edge artifacts remain. Each folder includes Next.js instructions. Manifest colors are editable samples. No SVG or maskable icons.

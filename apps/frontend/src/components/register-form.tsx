@@ -180,7 +180,7 @@ export default function RegisterForm() {
           <button
             type="submit"
             disabled={registerUser.isPending}
-            className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+            className="btn-primary w-full py-3 font-medium"
           >
             {registerUser.isPending ? "Creating account..." : "Create Account"}
           </button>

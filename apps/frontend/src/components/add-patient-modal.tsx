@@ -29,7 +29,7 @@ export function AddPatientModal({ isOpen, onClose }: AddPatientModalProps) {
     registerPatient.mutate(
       {
         ...data,
-        dob: new Date(data.dob).toISOString(),
+        dob: data.dob,
       },
       {
         onSuccess: () => {
@@ -199,7 +199,7 @@ export function AddPatientModal({ isOpen, onClose }: AddPatientModalProps) {
             <button
               type="submit"
               disabled={registerPatient.isPending}
-              className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+              className="btn-primary w-full py-3 font-medium"
             >
               {registerPatient.isPending
                 ? "Registering..."

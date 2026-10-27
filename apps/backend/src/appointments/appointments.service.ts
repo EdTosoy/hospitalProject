@@ -6,7 +6,13 @@ import {
 } from '@nestjs/common';
 import { eq, or, isNull } from 'drizzle-orm';
 import { DatabaseService } from '../database/database.service';
-import { appointments, patients, users } from '../database/schema';
+import {
+  appointments,
+  patients,
+  users,
+  consultNotes,
+  billings,
+} from '../database/schema';
 import { Actor, found, publicUserColumns } from '../database/access';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
@@ -175,6 +181,26 @@ export class AppointmentsService {
           ? await this.patient(data.patientId, actor)
           : undefined;
         await this.doctor(data.doctorId);
+        // The parent row is already locked. Dependent writers hold SHARE on it,
+        // so these reads see their committed links before identity changes proceed.
+        const note = await tx.query.consultNotes.findFirst({
+          where: eq(consultNotes.appointmentId, id),
+        });
+        if (patient && patient.id !== existing.patientId) {
+          const bill = await tx.query.billings.findFirst({
+            where: eq(billings.appointmentId, id),
+          });
+          if (note || bill)
+            throw new ConflictException(
+              'A linked appointment cannot be reassigned to another patient',
+            );
+        }
+        const doctorId =
+          data.doctorId === undefined ? existing.doctorId : data.doctorId;
+        if (note && doctorId && note.doctorId !== doctorId)
+          throw new ConflictException(
+            'The appointment doctor must match its consultation author',
+          );
         if (data.dateTime && new Date(data.dateTime) <= new Date())
           throw new BadRequestException('Appointment must be in the future');
         return found(
@@ -214,6 +240,16 @@ export class AppointmentsService {
         if (['COMPLETED', 'CANCELLED', 'NO_SHOW'].includes(existing.status))
           throw new ConflictException(
             'Terminal appointment history cannot be deleted',
+          );
+        const note = await tx.query.consultNotes.findFirst({
+          where: eq(consultNotes.appointmentId, id),
+        });
+        const bill = await tx.query.billings.findFirst({
+          where: eq(billings.appointmentId, id),
+        });
+        if (note || bill)
+          throw new ConflictException(
+            'Appointments with linked notes or bills cannot be deleted',
           );
         return found(
           (

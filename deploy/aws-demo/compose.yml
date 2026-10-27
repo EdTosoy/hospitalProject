@@ -1,0 +1,208 @@
+name: abox-demo
+
+x-logging: &logging
+  driver: local
+  options:
+    max-size: "5m"
+    max-file: "3"
+
+x-backend: &backend
+  image: ${BACKEND_IMAGE:?Set a GHCR SHA-tagged and digest-pinned backend image}
+  platform: ${ABOX_PLATFORM:-linux/arm64}
+  user: "1000:1000"
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs: ["/tmp:size=32m,mode=1777"]
+  entrypoint: [node, /run/abox/backend-runtime.cjs]
+  configs:
+    - source: backend_runtime
+      target: /run/abox/backend-runtime.cjs
+  environment: &backend-env
+    NODE_ENV: production
+    NODE_OPTIONS: --max-old-space-size=256
+    PORT: "8080"
+    DATABASE_HOST: database
+    DATABASE_NAME: ${DATABASE_NAME:-abox_demo}
+    CORS_ORIGIN: https://abox.edtosoy.com
+  depends_on:
+    database:
+      condition: service_healthy
+  logging: *logging
+  pids_limit: 100
+
+services:
+  database:
+    image: ${POSTGRES_IMAGE:?Set a digest-pinned PostgreSQL 17 image}
+    platform: ${ABOX_PLATFORM:-linux/arm64}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/admin_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    secrets: [admin_password, app_password]
+    volumes:
+      - database:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/01-abox.sh:ro
+    command:
+      - postgres
+      - -c
+      - shared_buffers=64MB
+      - -c
+      - max_connections=20
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - log_statement=none
+      - -c
+      - log_min_error_statement=panic
+      - -c
+      - log_parameter_max_length_on_error=0
+    networks: [database]
+    # No host port, including no loopback publication.
+    mem_limit: 320m
+    memswap_limit: 320m
+    cpus: 0.5
+    pids_limit: 100
+    shm_size: 96m
+    logging: *logging
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+
+  migrate:
+    <<: *backend
+    profiles: [maintenance]
+    restart: "no"
+    command: [dist/src/database/migrate.js]
+    secrets: [app_password]
+    networks: [database]
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 0.5
+
+  seed:
+    <<: *backend
+    profiles: [maintenance]
+    restart: "no"
+    command: [dist/src/database/seed.js]
+    environment:
+      <<: *backend-env
+      NODE_ENV: development
+      ABOX_SYNTHETIC_DEMO_ONLY: "true"
+    secrets: [app_password, demo_password]
+    networks: [database]
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 0.5
+
+  backend:
+    <<: *backend
+    restart: unless-stopped
+    command: [dist/src/main.js]
+    secrets: [app_password, jwt_secret]
+    networks: [app, database]
+    mem_limit: 384m
+    memswap_limit: 384m
+    cpus: 0.65
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?Set a GHCR SHA-tagged and digest-pinned frontend image}
+    platform: ${ABOX_PLATFORM:-linux/arm64}
+    restart: unless-stopped
+    user: "1000:1000"
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      NODE_ENV: production
+      NODE_OPTIONS: --max-old-space-size=256
+      NEXT_TELEMETRY_DISABLED: "1"
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+      - /app/apps/frontend/.next/cache:size=32m,uid=1000,gid=1000,mode=0700
+    networks: [app]
+    mem_limit: 384m
+    memswap_limit: 384m
+    cpus: 0.65
+    pids_limit: 100
+    logging: *logging
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  caddy:
+    image: ${CADDY_IMAGE:?Set a digest-pinned Caddy 2 image}
+    platform: ${ABOX_PLATFORM:-linux/arm64}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    networks: [edge, app]
+    mem_limit: 96m
+    memswap_limit: 96m
+    cpus: 0.2
+    pids_limit: 100
+    logging: *logging
+    depends_on:
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:2019/config/]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+networks:
+  edge: {}
+  app:
+    internal: true
+  database:
+    internal: true
+
+volumes:
+  database: {}
+  caddy_data: {}
+  caddy_config: {}
+
+configs:
+  backend_runtime:
+    file: ./backend-runtime.cjs
+
+secrets:
+  admin_password:
+    file: ${ABOX_SECRETS_DIR:-/etc/abox/secrets}/admin_password
+  app_password:
+    file: ${ABOX_SECRETS_DIR:-/etc/abox/secrets}/app_password
+  jwt_secret:
+    file: ${ABOX_SECRETS_DIR:-/etc/abox/secrets}/jwt_secret
+  demo_password:
+    file: ${ABOX_SECRETS_DIR:-/etc/abox/secrets}/demo_password

@@ -362,7 +362,7 @@ test("keyboard navigation, password visibility, and login failure feedback", asy
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("link", { name: "Back to Pulse" })).toBeFocused();
+  await expect(page.getByRole("link", { name: "Back to abox" })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByLabel("Email", { exact: true })).toBeFocused();
   await page

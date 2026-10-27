@@ -1,5 +1,4 @@
 import {
-  Activity,
   ArrowLeft,
   CalendarDays,
   ClipboardCheck,
@@ -7,6 +6,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 
 export function AuthShell({
   children,
@@ -17,13 +17,13 @@ export function AuthShell({
 }) {
   return (
     <main className="min-h-screen lg:grid lg:grid-cols-2">
-      <section className="hidden flex-col justify-between border-r bg-[#e9f2ef] p-12 lg:flex">
+      <section className="hidden flex-col justify-between border-r bg-brand-soft p-12 lg:flex">
         <Link
           href="/"
+          aria-label="abox home"
           className="flex items-center gap-3 text-lg font-semibold"
         >
-          <Activity className="size-6 text-primary" />
-          Pulse Medical
+          <BrandLogo className="w-40" />
         </Link>
         <div className="max-w-lg">
           <p className="eyebrow">
@@ -53,7 +53,7 @@ export function AuthShell({
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Pulse Medical Center · Patient portal & staff access
+          abox · Hospital Management Platform
         </p>
       </section>
       <section className="flex min-h-screen flex-col p-4 sm:p-8">
@@ -62,8 +62,11 @@ export function AuthShell({
           className="inline-flex w-fit items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary"
         >
           <ArrowLeft className="size-4" />
-          Back to Pulse
+          Back to abox
         </Link>
+        <div className="mt-6 w-fit lg:hidden">
+          <BrandLogo />
+        </div>
         <div className="flex flex-1 items-center justify-center py-8">
           {children}
         </div>

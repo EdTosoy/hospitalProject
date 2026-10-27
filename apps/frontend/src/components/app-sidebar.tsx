@@ -3,7 +3,6 @@
 import {
   CalendarDays,
   CreditCard,
-  GalleryVerticalEnd,
   Home,
   ListOrdered,
   User,
@@ -25,9 +24,8 @@ import { useAuthStore } from "@/stores/auth-store";
 
 const teams = [
   {
-    name: "Pulse Medical",
-    logo: GalleryVerticalEnd,
-    plan: "Care, connected",
+    name: "abox",
+    plan: "Hospital Management Platform",
   },
 ];
 
@@ -114,7 +112,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const sidebarUser = {
     name: user?.name || user?.role || "User",
-    email: user?.email || "guest@pulse.hospital",
+    email: user?.email || "",
     avatar: "",
   };
   return (

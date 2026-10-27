@@ -12,6 +12,7 @@ import {
 } from "@/components/care-ui";
 import { usePatients } from "@/hooks/use-patients";
 import { useAddToQueue } from "@/hooks/use-queue";
+import { formatBirthDate } from "@/lib/birth-date";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function PatientsPage() {
@@ -123,7 +124,9 @@ export default function PatientsPage() {
                         ? "Adding…"
                         : "Add to Queue"}
                     </button>
-                    {["DOCTOR", "NURSE"].includes(user?.role || "") && (
+                    {["DOCTOR", "NURSE", "ADMIN"].includes(
+                      user?.role || "",
+                    ) && (
                       <Link
                         href={`/dashboard/consult/${item.id}`}
                         className="btn-primary"
@@ -147,9 +150,7 @@ export default function PatientsPage() {
                       <dt className="text-xs text-muted-foreground">
                         Date of birth
                       </dt>
-                      <dd className="mt-1">
-                        {new Date(item.dob).toLocaleDateString()}
-                      </dd>
+                      <dd className="mt-1">{formatBirthDate(item.dob)}</dd>
                     </div>
                     <div>
                       <dt className="text-xs text-muted-foreground">Gender</dt>

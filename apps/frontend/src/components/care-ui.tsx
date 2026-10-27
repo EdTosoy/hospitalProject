@@ -88,9 +88,9 @@ export function EmptyState({
 
 export function StatusBadge({ status }: { status: string }) {
   const color = ["COMPLETED", "PAID"].includes(status)
-    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+    ? "bg-brand-soft text-primary border-primary/20"
     : ["CONFIRMED", "CALLED", "IN_PROGRESS"].includes(status)
-      ? "bg-teal-50 text-teal-800 border-teal-200"
+      ? "bg-brand-soft text-primary border-primary/20"
       : ["PENDING", "WAITING", "OVERDUE"].includes(status)
         ? "bg-amber-50 text-amber-900 border-amber-200"
         : "bg-slate-100 text-slate-700 border-slate-200";

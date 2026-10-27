@@ -1,5 +1,4 @@
 import {
-  Activity,
   ArrowRight,
   CalendarDays,
   ClipboardCheck,
@@ -8,6 +7,7 @@ import {
   UserRound,
 } from "lucide-react";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default function Home() {
   return (
@@ -20,17 +20,8 @@ export default function Home() {
       </a>
       <header className="border-b bg-card">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5 font-semibold">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-white">
-              <Activity className="size-5" />
-            </span>
-            <span>
-              Pulse
-              <span className="hidden text-muted-foreground sm:inline">
-                {" "}
-                Medical
-              </span>
-            </span>
+          <Link href="/" aria-label="abox home" className="shrink-0">
+            <BrandLogo className="w-24 sm:w-32" />
           </Link>
           <nav
             aria-label="Main navigation"
@@ -51,7 +42,7 @@ export default function Home() {
       <main id="main-content" tabIndex={-1}>
         <section className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1.2fr_1fr]">
           <div>
-            <p className="eyebrow">Pulse Medical Center</p>
+            <p className="eyebrow">Hospital Management Platform</p>
             <h1 className="mt-5 max-w-2xl text-4xl leading-[1.1] font-semibold tracking-tight sm:text-6xl">
               Your care.
               <br />
@@ -80,7 +71,7 @@ export default function Home() {
               </Link>
             </p>
           </div>
-          <div className="relative rounded-3xl border bg-[#e9f2ef] p-5 sm:p-8">
+          <div className="relative rounded-3xl border bg-brand-soft p-5 sm:p-8">
             <div className="mb-6 flex items-center justify-between">
               <span className="flex items-center gap-2 text-sm font-semibold text-primary">
                 <Stethoscope className="size-5" />
@@ -176,7 +167,7 @@ export default function Home() {
         </section>
       </main>
       <footer className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground sm:px-6">
-        <p>© 2026 Pulse Medical Center</p>
+        <p>© 2026 abox · Hospital Management Platform</p>
         <p>Patient portal & care team workspace</p>
       </footer>
     </div>

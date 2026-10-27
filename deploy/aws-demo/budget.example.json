@@ -1,0 +1,14 @@
+{
+  "BudgetName": "abox-account-gross-monthly",
+  "BudgetType": "COST",
+  "TimeUnit": "MONTHLY",
+  "BudgetLimit": { "Amount": "25", "Unit": "USD" },
+  "CostTypes": {
+    "IncludeCredit": false,
+    "IncludeRefund": false,
+    "IncludeTax": true,
+    "IncludeSupport": true,
+    "UseBlended": false,
+    "UseAmortized": false
+  }
+}

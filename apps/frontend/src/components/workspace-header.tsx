@@ -1,5 +1,6 @@
 "use client";
 import { usePathname } from "next/navigation";
+import { BrandLogo } from "@/components/brand-logo";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/stores/auth-store";
 
@@ -29,8 +30,9 @@ export function WorkspaceHeader() {
     <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-3 border-b bg-background/95 px-4 backdrop-blur sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <SidebarTrigger />
+        <BrandLogo variant="symbol" className="size-7 sm:hidden" />
         <span className="hidden text-sm text-muted-foreground sm:inline">
-          {roleLabels[user?.role || ""] || "Pulse Medical"}
+          {roleLabels[user?.role || ""] || "abox"}
         </span>
         <span
           className="hidden text-muted-foreground/40 sm:inline"

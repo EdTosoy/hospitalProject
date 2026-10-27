@@ -9,6 +9,7 @@ import { patients } from '../database/schema';
 import { Actor, found, requireStaff } from '../database/access';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
+import { storedBirthDate } from './birth-date';
 @Injectable()
 export class PatientsService {
   constructor(private readonly database: DatabaseService) {}
@@ -31,7 +32,7 @@ export class PatientsService {
           (
             await tx
               .insert(patients)
-              .values({ ...dto, dob: new Date(dto.dob), userId })
+              .values({ ...dto, dob: storedBirthDate(dto.dob), userId })
               .returning()
           )[0],
         ),
@@ -48,7 +49,7 @@ export class PatientsService {
           (
             await tx
               .insert(patients)
-              .values({ ...dto, dob: new Date(dto.dob) })
+              .values({ ...dto, dob: storedBirthDate(dto.dob) })
               .returning()
           )[0],
         ),
@@ -91,7 +92,10 @@ export class PatientsService {
           (
             await tx
               .update(patients)
-              .set({ ...dto, dob: dto.dob ? new Date(dto.dob) : undefined })
+              .set({
+                ...dto,
+                dob: dto.dob ? storedBirthDate(dto.dob) : undefined,
+              })
               .where(eq(patients.id, id))
               .returning()
           )[0],

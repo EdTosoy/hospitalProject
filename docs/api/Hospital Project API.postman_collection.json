@@ -3,7 +3,7 @@
     "_postman_id": "8f66a8f7-a29b-4686-8962-8a999fd59d62",
     "name": "Hospital Project API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Pulse Medical API. Use a dedicated local database and the example environment. Login saves the bearer token locally. Public registration always creates a PATIENT; staff operations require the matching seeded role. Replace resource IDs and appointment_date before sending requests."
+    "description": "abox Hospital Management Platform API. Use a dedicated local database and the example environment. Login saves the bearer token locally. Public registration always creates a PATIENT; staff operations require the matching seeded role. Replace resource IDs and appointment_date before sending requests."
   },
   "item": [
     {

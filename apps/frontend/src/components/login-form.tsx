@@ -39,9 +39,7 @@ export default function LoginForm() {
             <LogIn className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold">Welcome Back</h1>
-          <p className="text-muted-foreground text-sm">
-            Sign in to Pulse Medical Center
-          </p>
+          <p className="text-muted-foreground text-sm">Sign in to abox</p>
         </div>
 
         {login.isError && (
@@ -120,7 +118,7 @@ export default function LoginForm() {
           <button
             type="submit"
             disabled={login.isPending}
-            className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+            className="btn-primary w-full py-3 font-medium"
           >
             {login.isPending ? "Signing in..." : "Sign In"}
           </button>
