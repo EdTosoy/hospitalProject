@@ -67,6 +67,14 @@ Before executing the setup, explicitly authorize this local-only scope:
    passphrase/recovery information independently in an owner-controlled password
    manager. The recovery location has not yet been supplied or verified.
 
+If no such encrypted directory exists, the [passphrase-encrypted recovery-image
+alternative](recovery-archive.md) proposes an age archive on the separate storage
+disk. Confirm that method/destination before setup, and replace only the recovery
+copy/tool-acquisition steps as described there. The owner's latest approval covers
+preparing the isolated container, subject to interactive approval for privileged
+operations; do not ask for that general authorization again. Recovery selection
+and private host-terminal interactions remain required.
+
 Recheck RAM/free disk/swap immediately before acting. If the swap inventory differs,
 stop for review; do not substitute `swapoff -a` or alter another device. An existing
 container, base directory or mapping requires a separate resume review, never a

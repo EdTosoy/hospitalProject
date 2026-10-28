@@ -120,3 +120,43 @@ changed, so schema/provider tests were not repeated for this local guard review.
   metadata location, logging and injected arguments. The published current page
   was available; version-specific 1.15 documentation fetches were unavailable.
   No Terraform API/configuration change relies on an unverified new behavior.
+
+## Conditional owner approval and recovery fallback
+
+The owner has now approved preparing only
+`~/.local/share/abox-private/terraform.luks` as a new isolated 1 GiB LUKS2 image,
+with temporary Nix tools, private password entry and interactive approval for
+privileged operations. That general authorization is retained; it is not requested
+again. Recovery-backup selection must be resolved before executing setup.
+
+Read-only host checks in this continuation confirmed:
+
+- Home: `/dev/nvme0n1p3`, writable ext4; `/mnt/storage`: `/dev/sda1`, writable
+  ext4 on a separate physical disk, about 291 GiB free, writable by UID 1001.
+- The proposed `/mnt/storage/abox-recovery` directory does not exist; its parent
+  is canonical. The approved image/base and expected mapping remain absent.
+- Plain swap remains active with 0 B used; `sudo -n -l` still requires a private
+  interactive password. No privileged storage change was attempted.
+- Neither age nor cryptsetup is on PATH. The pinned Nix source provides age
+  1.3.2 and cryptsetup 2.8.6; neither has been acquired during this continuation.
+
+The [recovery-image alternative](../infra/aws-state/recovery-archive.md) proposes
+`/mnt/storage/abox-recovery/terraform.luks.age`: a passphrase-encrypted archive of
+the closed LUKS image, verified by streamed decryption and byte comparison. It
+avoids requiring a pre-existing encrypted destination filesystem. Both archive
+and LUKS passphrases stay in the owner's terminal/password manager. The archive
+would be on an independent disk in the same machine, not off-site storage.
+
+The recovery method/destination and temporary age acquisition were presented for
+owner selection. They remain pending; no directory, archive, container or mount
+has been created. The alternative must be selected before acquiring tools or
+executing setup; an existing suitable encrypted directory remains an option.
+
+Executed continuation checks: the nine-test offline workspace suite **PASS**,
+all 14 fenced shell blocks across the LUKS runbook, planning checklist and archive
+alternative **PASS** under `bash -n`, and `git diff --check` **PASS**. Shell syntax
+checks execute no setup commands. Actual encryption, mounting, private artifact
+persistence, recovery comparison, reopening and cleanup remain **NOT RUN**.
+The conditional approval does not itself change the workspace readiness result:
+**NO-GO for secure state bootstrap** until actual acceptance succeeds. No AWS
+access, Terraform execution, system configuration change, commit or push occurred.
