@@ -1,5 +1,10 @@
 # abox — Phase 3A AWS demo preparation
 
+**Current region: Sydney (`ap-southeast-2`), confirmed by the owner.** See the
+[latest Sydney readiness results](aws-sydney-readiness-2026-10-28.md). Geographic
+settings and prices below describe historical Singapore preparation; they are
+superseded by the current Terraform, deployment runbook and Sydney report.
+
 **State-storage update (2026-10-28):** the [dedicated S3 backend preparation](../infra/aws-state/README.md)
 supersedes the local-backend design below. Both remote state and protected local
 plan handling remain NO-GO until separately approved bootstrap and verified

@@ -55,8 +55,8 @@ def compose(*args, **kwargs):
 def aws(values, *args):
     # Host operations use only the EC2 role, never an operator/default/Flow profile.
     env = {key: value for key, value in os.environ.items() if not key.startswith("AWS_")}
-    env.update(AWS_CONFIG_FILE="/dev/null", AWS_SHARED_CREDENTIALS_FILE="/dev/null", AWS_REGION="ap-southeast-1", AWS_EC2_METADATA_DISABLED="false")
-    result = subprocess.run(["aws", "--region", "ap-southeast-1", "--no-cli-pager", *args, "--output", "json"],
+    env.update(AWS_CONFIG_FILE="/dev/null", AWS_SHARED_CREDENTIALS_FILE="/dev/null", AWS_REGION="ap-southeast-2", AWS_EC2_METADATA_DISABLED="false")
+    result = subprocess.run(["aws", "--region", "ap-southeast-2", "--no-cli-pager", *args, "--output", "json"],
                             check=True, env=env, capture_output=True, text=True)
     return json.loads(result.stdout or "{}")
 
@@ -74,7 +74,7 @@ def owner_approval(values):
     if (record.get("account_sha256") != hashlib.sha256(values["EXPECTED_ACCOUNT_ID"].encode()).hexdigest()
             or record.get("plan") != "FREE" or record.get("status") != "ACTIVE"
             or not record.get("credit_runway_verified")
-            or record.get("region") != "ap-southeast-1"
+            or record.get("region") != "ap-southeast-2"
             or now >= dt.datetime.fromisoformat(record["valid_until"])):
         raise RuntimeError("Fresh owner Free-plan/account approval is required")
 

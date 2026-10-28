@@ -15,7 +15,7 @@ terraform {
 }
 
 provider "aws" {
-  region              = "ap-southeast-1"
+  region              = "ap-southeast-2"
   profile             = "abox-747240980964"
   allowed_account_ids = ["747240980964"]
 

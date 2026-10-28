@@ -39,6 +39,35 @@ class ReleaseFixture(unittest.TestCase):
 
 
 class ReleaseConfigTests(ReleaseFixture):
+    def test_host_aws_forces_sydney_and_instance_role(self):
+        with mock.patch.dict(os.environ, {"AWS_PROFILE": "default", "AWS_REGION": "ap-southeast-1",
+                                          "AWS_ACCESS_KEY_ID": "synthetic-not-a-credential"}), \
+                mock.patch.object(subprocess, "run", return_value=subprocess.CompletedProcess([], 0, "{}", "")) as run:
+            common.aws(self.values, "s3api", "list-objects-v2")
+        command = run.call_args.args[0]
+        env = run.call_args.kwargs["env"]
+        self.assertEqual(command[command.index("--region") + 1], "ap-southeast-2")
+        self.assertNotIn("--profile", command)
+        self.assertEqual(env["AWS_REGION"], "ap-southeast-2")
+        self.assertEqual(env["AWS_CONFIG_FILE"], "/dev/null")
+        self.assertEqual(env["AWS_SHARED_CREDENTIALS_FILE"], "/dev/null")
+        self.assertNotIn("AWS_PROFILE", env)
+        self.assertNotIn("AWS_ACCESS_KEY_ID", env)
+
+    def test_owner_approval_requires_sydney(self):
+        record = {
+            "account_sha256": common.hashlib.sha256(self.values["EXPECTED_ACCOUNT_ID"].encode()).hexdigest(),
+            "plan": "FREE", "status": "ACTIVE", "credit_runway_verified": True,
+            "valid_until": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=1)).isoformat(),
+        }
+        for region in ["ap-southeast-1", "ap-southeast-2"]:
+            with mock.patch.object(pathlib.Path, "read_text", return_value=json.dumps({**record, "region": region})):
+                if region == "ap-southeast-2":
+                    common.owner_approval(self.values)
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "Fresh owner"):
+                        common.owner_approval(self.values)
+
     def test_rejects_mutable_image_or_wrong_release(self):
         for value in ["ghcr.io/demo/abox-backend:latest", self.values["BACKEND_IMAGE"].replace("sha-1", "sha-2", 1)]:
             self.values["BACKEND_IMAGE"] = value
@@ -68,7 +97,7 @@ class ReleaseConfigTests(ReleaseFixture):
 
 
 class AccountPreflightTests(unittest.TestCase):
-    def execute(self, responses, profile="abox-free", credit_days=100):
+    def execute(self, responses, profile="abox-747240980964", credit_days=100):
         with tempfile.TemporaryDirectory() as directory:
             output = pathlib.Path(directory) / "approval.json"
             argv = ["preflight.py", "--profile", profile, "--expected-account-id", "123456789012", "--output", str(output)]
@@ -81,6 +110,11 @@ class AccountPreflightTests(unittest.TestCase):
                 except RuntimeError as error:
                     self.assertFalse(output.exists())
                     return run.call_count, str(error)
+                finally:
+                    for call in run.call_args_list:
+                        command = call.args[0]
+                        self.assertEqual(command[command.index("--region") + 1], "ap-southeast-2")
+                        self.assertEqual(command[command.index("--profile") + 1], profile)
 
     def test_wrong_account_stops_before_any_other_read(self):
         calls, error = self.execute([{"Account": "999999999999"}])
@@ -116,6 +150,7 @@ class AccountPreflightTests(unittest.TestCase):
         ])
         self.assertEqual(calls, 6)
         self.assertEqual(record["plan"], "FREE")
+        self.assertEqual(record["region"], "ap-southeast-2")
         self.assertNotIn("123456789012", json.dumps(record))
         self.assertNotIn("amount", json.dumps(record))
 

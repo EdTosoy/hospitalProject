@@ -1,5 +1,5 @@
 # Copy outside source control only after the account owner verifies the new account.
-aws_profile          = "abox-free"
+aws_profile          = "abox-747240980964"
 expected_account_id  = "000000000000" # Deliberately invalid placeholder.
 free_plan_verified   = false          # Deliberately blocks plan/apply.
 backup_bucket_suffix = "replace123"

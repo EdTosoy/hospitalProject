@@ -2,13 +2,13 @@
 
 **NO-GO remains in force.** Local ext4 encryption is unverified. No bucket,
 policy, backend initialization against S3, state migration or real AWS plan was
-performed. The previous Singapore SCP denial remains unresolved. Local schema
+performed. Sydney is now the owner-confirmed assigned region. Local schema
 validation and mocked tests do not prove AWS permissions or locking operation.
 
-The [updated readiness review](../../docs/aws-ec2-readiness-2026-10-28.md)
-identifies an assigned-project-region restriction as the likely explanation, not
-a blanket EC2 Free-plan ban. Keep Singapore pinned until the owner independently
-confirms it is permitted; this applies to the state bucket as well as EC2.
+The [Sydney readiness review](../../docs/aws-sydney-readiness-2026-10-28.md)
+supersedes the earlier Singapore region restriction. Sydney EC2, S3 and SSM
+read-only checks now pass; bucket creation, policy attachment and migration remain
+separately gated. Keep both the state bucket and EC2 in the assigned Sydney region.
 
 ## Design
 
@@ -32,7 +32,7 @@ Terraform or editing its configuration.
 | Application | `abox/aws-demo/terraform.tfstate` | same key + `.tflock` |
 | Bootstrap | `abox/bootstrap/terraform.tfstate` | same key + `.tflock` |
 
-Account **747240980964**, region **ap-southeast-1**, and profile
+Account **747240980964**, region **ap-southeast-2**, and profile
 `abox-747240980964` are pinned. Both S3 backend configurations enforce the account
 independently of the AWS provider. Bucket names are generated with an
 account-specific prefix. The backend has `encrypt=true`, no KMS key, and
@@ -119,7 +119,7 @@ on SSDs, snapshots or copy-on-write filesystems.
 
 ## Later bootstrap commands — NOT executed or authorized now
 
-First resolve Singapore service access, Free-plan/credit conditions and encrypted
+First verify Sydney service access, individual credit expiry and encrypted
 workspace/swap protections. Refresh STS identity; if it differs, stop. Set
 `ABOX_SECURE_WORK` to a verified encrypted directory outside this repository.
 The following checks verify paths/permissions only, **not** encryption.
@@ -133,7 +133,7 @@ chmod 700 "$ABOX_SECURE_WORK"
 export TMPDIR="$ABOX_SECURE_WORK/tmp"
 mkdir -p "$TMPDIR" "$ABOX_SECURE_WORK/bootstrap" "$ABOX_SECURE_WORK/application"
 unset TF_LOG TF_LOG_PATH TF_LOG_CORE TF_LOG_PROVIDER
-test "$(aws --profile abox-747240980964 --region ap-southeast-1 \
+test "$(aws --profile abox-747240980964 --region ap-southeast-2 \
   sts get-caller-identity --query Account --output text)" = 747240980964
 cp infra/aws-state/*.tf infra/aws-state/.terraform.lock.hcl "$ABOX_SECURE_WORK/bootstrap/"
 cp infra/aws-state/backend_override.tf.example "$ABOX_SECURE_WORK/bootstrap/"
@@ -187,17 +187,17 @@ or deployment becomes authorized by approving the state bucket alone.
 
 ## Cost and verification
 
-Public Singapore S3 catalog fetched 2026-10-28 local date, without account
+Public Sydney S3 catalog fetched 2026-10-28 local date, without account
 credentials: Standard storage **$0.025/GB-month**, PUT/COPY/POST/LIST
-**$0.005/1,000**, GET/other Tier-2 requests **$0.004/10,000**.
-[AWS price catalog](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-southeast-1/index.json),
+**$0.0055/1,000**, GET/other Tier-2 requests **$0.0044/10,000**.
+[AWS price catalog](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-southeast-2/index.json),
 [S3 pricing](https://aws.amazon.com/s3/pricing/).
 SSE-S3 has [no additional encryption charge](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingServerSideEncryption.html).
 IAM and native S3 locking add no separate fixed service fee; locking incurs ordinary
 S3 requests. No DynamoDB or customer-managed KMS cost is introduced.
 
 Example allowance: **1 GB total current/historical objects**, **2,000 Tier-1** and
-**5,000 Tier-2 requests/month** costs **$0.037/month**, **$0.074/two months**,
+**5,000 Tier-2 requests/month** costs **$0.0382/month**, **$0.0764/two months**,
 before taxes, internet transfer, optional auditing/metrics and additional versions.
 Budget **$0.10/month** for a small manually operated backend; this is not a cap.
 Unexpired historical versions keep accruing storage costs after EC2 stops.
@@ -228,7 +228,8 @@ prepared implementation stays with Terraform. No CloudFormation artifacts,
 validator installation or extra project dependencies are required.
 
 In the latest local remediation review, both root validations, all three mocked
-security tests, formatting and the expanded 14-test offline deployment suite were
+security tests, formatting and the expanded 16-test offline deployment suite were
 executed successfully again. No IAM attachment, live native lock contention,
-S3 recovery, real plan or migration was performed. Scope/role selection and the
-assigned-region boundary must independently pass before this design becomes GO.
+S3 recovery, real plan or migration was performed. Scope/role selection, exact credit-grant expiry, encrypted local storage and live
+backend checks must independently pass before this design becomes GO. Sydney
+regional read access has now passed; it does not prove provisioning permissions.

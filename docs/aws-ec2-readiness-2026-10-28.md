@@ -1,5 +1,10 @@
 # abox EC2 readiness — 2026-10-28 (Asia/Manila)
 
+**Superseded for regional readiness:** the owner has confirmed Sydney
+(`ap-southeast-2`). See [the latest Sydney verification](aws-sydney-readiness-2026-10-28.md).
+Singapore denial evidence below is historical; do not use its old target-region
+prerequisites as current instructions. Current commands below now target Sydney.
+
 **Decision: NO-GO. No Terraform plan generated.** Singapore API access, a successful
 native frontend probe, and verified encrypted state storage are required before
 planning. Full EC2 remains the selected platform; Lightsail is reserved for FATS.
@@ -284,7 +289,7 @@ test -d "$ABOX_PRIVATE_DIR"
 chmod 700 "$ABOX_PRIVATE_DIR"
 cp -n infra/aws-demo/terraform.tfvars "$ABOX_PRIVATE_DIR/demo.tfvars"
 # Review private tfvars; confirm all gates and the agreed end date before setting true.
-aws --profile abox-747240980964 --region ap-southeast-1 sts get-caller-identity
+aws --profile abox-747240980964 --region ap-southeast-2 sts get-caller-identity
 python3 deploy/aws-demo/preflight.py \
   --profile abox-747240980964 --expected-account-id 747240980964 \
   --credit-expiration-date "${ABOX_CREDIT_EXPIRATION_DATE:?Set owner-verified earliest usable credit expiry YYYY-MM-DD}" \

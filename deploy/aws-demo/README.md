@@ -1,5 +1,10 @@
 # abox AWS demo operations
 
+**Current target: Sydney (`ap-southeast-2`), account 747240980964, profile
+`abox-747240980964`.** See the [Sydney readiness results](../../docs/aws-sydney-readiness-2026-10-28.md).
+Regional discovery and native ARM64 checks pass; encrypted local storage and the
+remaining independent deployment gates still require completion before provisioning.
+
 **State-storage update:** use the prepared [dedicated S3 backend runbook](../../infra/aws-state/README.md).
 It supersedes the local-backend commands below. Local plans and temporary state
 still require verified encrypted external storage; NO-GO remains in force. No
@@ -66,8 +71,8 @@ mkdir -p "$ABOX_PRIVATE_DIR"
 chmod 700 "$ABOX_PRIVATE_DIR"
 
 python3 deploy/aws-demo/preflight.py \
-  --profile abox-free \
-  --expected-account-id OWNER_CONFIRMED_ACCOUNT_ID \
+  --profile abox-747240980964 \
+  --expected-account-id 747240980964 \
   --credit-expiration-date "${ABOX_CREDIT_EXPIRATION_DATE:?Set owner-verified earliest credit expiry YYYY-MM-DD}" \
   --output "$ABOX_PRIVATE_DIR/account-approval.json"
 ```
@@ -161,7 +166,7 @@ After the owner confirms SSM is permitted/online, connect using the local Sessio
 Manager plugin and the explicitly named profile:
 
 ```sh
-aws --profile abox-free --region ap-southeast-1 ssm start-session \
+aws --profile abox-747240980964 --region ap-southeast-2 ssm start-session \
   --target OWNER_VERIFIED_INSTANCE_ID
 ```
 

@@ -31,7 +31,7 @@ def main():
     env["AWS_EC2_METADATA_DISABLED"] = "true"
 
     def read(*command):
-        result = subprocess.run(["aws", "--profile", args.profile, "--region", "ap-southeast-1", "--no-cli-pager", *command, "--output", "json"],
+        result = subprocess.run(["aws", "--profile", args.profile, "--region", "ap-southeast-2", "--no-cli-pager", *command, "--output", "json"],
                                 check=True, capture_output=True, text=True, env=env)
         return json.loads(result.stdout)
 
@@ -62,7 +62,7 @@ def main():
     read("ssm", "get-parameter", "--name", "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64")
     approval = {
         "account_sha256": hashlib.sha256(args.expected_account_id.encode()).hexdigest(),
-        "plan": "FREE", "status": "ACTIVE", "region": "ap-southeast-1",
+        "plan": "FREE", "status": "ACTIVE", "region": "ap-southeast-2",
         "credit_runway_verified": True, "checked_at": now.isoformat(),
         "valid_until": min(now + dt.timedelta(hours=3), expiry).isoformat(),
     }
