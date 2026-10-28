@@ -6,9 +6,9 @@ import hashlib
 import json
 import os
 import pathlib
-import re
 import subprocess
 from decimal import Decimal, InvalidOperation
+from common import CREDIT_RISK_WAIVER_ID, TARGET_ACCOUNT_ID, TARGET_PROFILE
 
 DEMO_DAYS = 62
 SHUTDOWN_MARGIN_DAYS = 7
@@ -20,11 +20,9 @@ def main():
     parser.add_argument("--profile", required=True)
     parser.add_argument("--expected-account-id", required=True)
     parser.add_argument("--output", type=pathlib.Path, required=True)
-    parser.add_argument("--credit-expiration-date", required=True,
-                        help="Owner-verified earliest usable credit expiry from Billing, YYYY-MM-DD")
     args = parser.parse_args()
-    if not re.fullmatch(r"abox-[a-z0-9-]+", args.profile) or not re.fullmatch(r"[0-9]{12}", args.expected_account_id):
-        raise RuntimeError("Use a dedicated abox-* profile and an owner-confirmed account ID")
+    if args.profile != TARGET_PROFILE or args.expected_account_id != TARGET_ACCOUNT_ID:
+        raise RuntimeError("Use only the owner-confirmed abox-747240980964 profile and account 747240980964")
     if not args.output.is_absolute() or args.output.resolve().is_relative_to(pathlib.Path(__file__).resolve().parents[2]):
         raise RuntimeError("Store approval outside the checkout using an absolute path")
     env = {key: value for key, value in os.environ.items() if not key.startswith("AWS_")}
@@ -44,12 +42,11 @@ def main():
     now = dt.datetime.now(dt.timezone.utc)
     expiry = dt.datetime.fromisoformat(plan["accountPlanExpirationDate"].replace("Z", "+00:00"))
     credits = plan.get("accountPlanRemainingCredits", {})
-    credit_expiry = dt.datetime.combine(dt.date.fromisoformat(args.credit_expiration_date), dt.time(), dt.timezone.utc)
     amount = Decimal(str(credits.get("amount", 0)))
     required_window = dt.timedelta(days=DEMO_DAYS + SHUTDOWN_MARGIN_DAYS)
     if (credits.get("unit") != "USD" or not amount.is_finite() or amount < MINIMUM_CREDITS
-            or min(expiry, credit_expiry) - now < required_window):
-        raise RuntimeError("Insufficient credit/expiry safety margin; do not launch")
+            or expiry - now < required_window):
+        raise RuntimeError("Insufficient balance/account-plan safety margin; do not launch")
     instance = read("ec2", "describe-instance-types", "--instance-types", "t4g.small")["InstanceTypes"][0]
     if instance["MemoryInfo"]["SizeInMiB"] != 2048 or "arm64" not in instance["ProcessorInfo"]["SupportedArchitectures"]:
         raise RuntimeError("Unexpected instance specification")
@@ -63,7 +60,11 @@ def main():
     approval = {
         "account_sha256": hashlib.sha256(args.expected_account_id.encode()).hexdigest(),
         "plan": "FREE", "status": "ACTIVE", "region": "ap-southeast-2",
-        "credit_runway_verified": True, "checked_at": now.isoformat(),
+        "credit_balance_and_plan_window_verified": True,
+        "credit_expiry_verification": "waived_by_owner",
+        "credit_applicability_verification": "waived_by_owner",
+        "credit_risk_waiver_id": CREDIT_RISK_WAIVER_ID,
+        "checked_at": now.isoformat(),
         "valid_until": min(now + dt.timedelta(hours=3), expiry).isoformat(),
     }
     # No account ID, credit amount, identity ARN, or credentials in the approval.
@@ -71,7 +72,8 @@ def main():
     with os.fdopen(fd, "w") as handle:
         json.dump(approval, handle, indent=2)
         handle.write("\n")
-    print("Verified target identity, FREE/ACTIVE plan, minimum credit runway, ARM type/offering, vCPU quota, and public AMI access. Approval expires within three hours.")
+    print("Verified target identity, FREE/ACTIVE plan, minimum balance/account-plan window, ARM type/offering, vCPU quota, and public AMI access. Approval expires within three hours.")
+    print("Individual credit expiry and service-specific applicability are WAIVED by the owner (ABOX-RISK-001), not verified.")
     print("S3/SSM operating permissions, Budgets availability, secure state storage, DNS, and images still need owner review. No resources created.")
 
 

@@ -1,11 +1,19 @@
 # abox Sydney readiness — 2026-10-28 (Asia/Manila)
 
 **Decision: NO-GO for provisioning.** Sydney regional reads and native ARM64
-verification now pass. Exact credit-grant expiry, protected local state/plan
+verification now pass. Protected local state/plan
 storage, reviewed bootstrap/application plans and live deployment acceptance
 remain separate gates. No AWS resources, account plans, SCPs, DNS or registry
 images were changed. No commit, push, Terraform apply/destroy or state migration
 occurred. Working tree started clean at `a017240b70d8b32614f7978d200c8bb2902c1291`.
+
+**Owner waiver update:** individual credit-expiry and service-specific credit
+applicability checks are waived under [ABOX-RISK-001](aws-demo-risks.md).
+They remain unverified and are not deployment blockers. Fresh identity,
+FREE/ACTIVE, minimum balance/account-plan window, Sydney service access and
+encrypted storage remain required. The [guarded planning checklist](../infra/aws-state/planning-checklist.md)
+is the current procedure; privileged local setup, resource creation and state
+migration remain separately authorized operations.
 
 ## Target and regional changes
 
@@ -46,7 +54,7 @@ project regions [here](https://docs.aws.amazon.com/accounts/latest/reference/pro
 | S3 | PASS: Sydney bucket listing permitted; count only inspected, existing bucket unchanged |
 | SSM | PASS: public parameter and managed-node listing permitted; zero managed nodes |
 | Existing budget | PASS: mdp-monthly-gross-usd-5 remains $5/month; IncludeCredit=false; unchanged |
-| Individual credit expiry | BLOCKED: billing:GetCredits explicitly denied by SCP p-wvco80d7 |
+| Individual credit expiry/applicability | UNVERIFIED; billing:GetCredits was SCP-denied. Owner-waived under ABOX-RISK-001; not a blocker. |
 
 Representative commands executed (identity ran first):
 
@@ -81,12 +89,13 @@ explicit SCP deny. No authorization/endpoint workaround or further credit API
 attempt followed; no permission or account plan was changed. The temporary model
 contains public API definitions only; no credential or credit response was saved.
 
-Manual requirement: use AWS Settings → Credits remaining to verify each usable
-grant's remaining balance, applicable services and exact expiry. Record the
-earliest relevant date, then pass it as `--credit-expiration-date YYYY-MM-DD`.
-The preflight retains its $75 minimum ($50 operating allowance + $25 reserve),
-69-day window and exact caller-account verification. No approval JSON was issued
-using an invented credit date, and the Terraform planning guard remains false.
+The owner has waived independent grant-expiry and service-specific applicability
+verification under ABOX-RISK-001. Do not request grant dates again or retry the
+denied Billing API. Preflight no longer takes a credit-expiration argument; it
+records explicit waiver fields instead of claiming fully verified credit runway.
+It retains the $75 minimum ($50 operating allowance + $25 reserve), 69-day
+account-plan window and exact caller-account verification. No grant date is
+invented, and the source Terraform planning guard remains false.
 
 ## Revised Sydney costs
 
@@ -172,13 +181,14 @@ Keep cwd, plans, `TF_DATA_DIR`, `TMPDIR`, migration backups and error state insi
 the verified mount. Never run Terraform sensitive operations in an unmounted
 fallback directory. Formatting/mount/swap changes require separate approval.
 
-Next safe step: record the exact credit-grant expiry and approve/verify the local
+Next safe step: approve/verify the local
 encrypted workspace. Then prepare and review a **bootstrap-only** plan from that
 workspace under the [state runbook](../infra/aws-state/README.md). Do not apply it
 without approval; state migration requires another explicit approval. Application
 images must later be separately authorized for publication and pinned by digest.
 SSM/bootstrap, real HTTPS/cookies, representative 2-GiB ARM host use, and S3
-backup/restore remain live acceptance gates. No deployment gate is waived here.
+backup/restore remain live acceptance gates. Only the two credit checks recorded
+under ABOX-RISK-001 are waived.
 
 ## Exact changed files
 

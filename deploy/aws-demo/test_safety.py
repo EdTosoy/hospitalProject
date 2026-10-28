@@ -30,8 +30,8 @@ class ReleaseFixture(unittest.TestCase):
             "FRONTEND_IMAGE": "ghcr.io/demo/abox-frontend:sha-" + "1" * 40 + "@sha256:" + "b" * 64,
             "POSTGRES_IMAGE": "postgres:17-alpine@sha256:" + "c" * 64,
             "CADDY_IMAGE": "caddy:2-alpine@sha256:" + "d" * 64,
-            "BACKUP_BUCKET": "abox-demo-backups-123456789012-demo123",
-            "EXPECTED_ACCOUNT_ID": "123456789012",
+            "BACKUP_BUCKET": "abox-demo-backups-747240980964-demo123",
+            "EXPECTED_ACCOUNT_ID": "747240980964",
         }
 
     def write(self):
@@ -54,10 +54,14 @@ class ReleaseConfigTests(ReleaseFixture):
         self.assertNotIn("AWS_PROFILE", env)
         self.assertNotIn("AWS_ACCESS_KEY_ID", env)
 
-    def test_owner_approval_requires_sydney(self):
+    def test_owner_approval_requires_sydney_and_explicit_waiver(self):
         record = {
             "account_sha256": common.hashlib.sha256(self.values["EXPECTED_ACCOUNT_ID"].encode()).hexdigest(),
-            "plan": "FREE", "status": "ACTIVE", "credit_runway_verified": True,
+            "plan": "FREE", "status": "ACTIVE",
+            "credit_balance_and_plan_window_verified": True,
+            "credit_expiry_verification": "waived_by_owner",
+            "credit_applicability_verification": "waived_by_owner",
+            "credit_risk_waiver_id": common.CREDIT_RISK_WAIVER_ID,
             "valid_until": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=1)).isoformat(),
         }
         for region in ["ap-southeast-1", "ap-southeast-2"]:
@@ -67,6 +71,13 @@ class ReleaseConfigTests(ReleaseFixture):
                 else:
                     with self.assertRaisesRegex(RuntimeError, "Fresh owner"):
                         common.owner_approval(self.values)
+        for field in ["credit_balance_and_plan_window_verified", "credit_expiry_verification",
+                      "credit_applicability_verification", "credit_risk_waiver_id"]:
+            incomplete = {**record, "region": "ap-southeast-2"}
+            del incomplete[field]
+            with mock.patch.object(pathlib.Path, "read_text", return_value=json.dumps(incomplete)):
+                with self.assertRaisesRegex(RuntimeError, "Fresh owner"):
+                    common.owner_approval(self.values)
 
     def test_rejects_mutable_image_or_wrong_release(self):
         for value in ["ghcr.io/demo/abox-backend:latest", self.values["BACKEND_IMAGE"].replace("sha-1", "sha-2", 1)]:
@@ -97,11 +108,10 @@ class ReleaseConfigTests(ReleaseFixture):
 
 
 class AccountPreflightTests(unittest.TestCase):
-    def execute(self, responses, profile="abox-747240980964", credit_days=100):
+    def execute(self, responses, profile="abox-747240980964", expected_account_id="747240980964"):
         with tempfile.TemporaryDirectory() as directory:
             output = pathlib.Path(directory) / "approval.json"
-            argv = ["preflight.py", "--profile", profile, "--expected-account-id", "123456789012", "--output", str(output)]
-            argv += ["--credit-expiration-date", (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=credit_days)).date().isoformat()]
+            argv = ["preflight.py", "--profile", profile, "--expected-account-id", expected_account_id, "--output", str(output)]
             results = [subprocess.CompletedProcess([], 0, json.dumps(value), "") for value in responses]
             with mock.patch.object(sys, "argv", argv), mock.patch.object(subprocess, "run", side_effect=results) as run, contextlib.redirect_stdout(io.StringIO()):
                 try:
@@ -126,14 +136,14 @@ class AccountPreflightTests(unittest.TestCase):
         self.assertEqual(calls, 0)
 
     def test_paid_account_cannot_proceed(self):
-        calls, error = self.execute([{"Account": "123456789012"}, {"accountPlanType": "PAID", "accountPlanStatus": "ACTIVE"}])
+        calls, error = self.execute([{"Account": "747240980964"}, {"accountPlanType": "PAID", "accountPlanStatus": "ACTIVE"}])
         self.assertEqual(calls, 2)
         self.assertIn("Free plan", error)
 
-    def test_insufficient_credit_or_expiry_blocks_approval(self):
+    def test_insufficient_balance_or_account_plan_window_blocks_approval(self):
         for amount, days in [(25, 100), (74, 100), (100, 60), (100, 3), ("NaN", 100)]:
             calls, error = self.execute([
-                {"Account": "123456789012"},
+                {"Account": "747240980964"},
                 {"accountPlanType": "FREE", "accountPlanStatus": "ACTIVE", "accountPlanRemainingCredits": {"unit": "USD", "amount": amount}, "accountPlanExpirationDate": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=days)).isoformat()},
             ])
             self.assertEqual(calls, 2)
@@ -141,7 +151,7 @@ class AccountPreflightTests(unittest.TestCase):
 
     def test_success_does_not_persist_account_or_credit_amount(self):
         calls, record = self.execute([
-            {"Account": "123456789012"},
+            {"Account": "747240980964"},
             {"accountPlanType": "FREE", "accountPlanStatus": "ACTIVE", "accountPlanRemainingCredits": {"unit": "USD", "amount": 100}, "accountPlanExpirationDate": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=100)).isoformat()},
             {"InstanceTypes": [{"MemoryInfo": {"SizeInMiB": 2048}, "ProcessorInfo": {"SupportedArchitectures": ["arm64"]}}]},
             {"InstanceTypeOfferings": [{"InstanceType": "t4g.small"}]},
@@ -151,16 +161,19 @@ class AccountPreflightTests(unittest.TestCase):
         self.assertEqual(calls, 6)
         self.assertEqual(record["plan"], "FREE")
         self.assertEqual(record["region"], "ap-southeast-2")
-        self.assertNotIn("123456789012", json.dumps(record))
+        self.assertNotIn("747240980964", json.dumps(record))
         self.assertNotIn("amount", json.dumps(record))
+        self.assertNotIn("credit_runway_verified", record)
+        self.assertTrue(record["credit_balance_and_plan_window_verified"])
+        self.assertEqual(record["credit_expiry_verification"], "waived_by_owner")
+        self.assertEqual(record["credit_applicability_verification"], "waived_by_owner")
+        self.assertEqual(record["credit_risk_waiver_id"], "ABOX-RISK-001")
 
-    def test_early_individual_credit_expiry_blocks_even_with_later_plan_expiry(self):
-        calls, error = self.execute([
-            {"Account": "123456789012"},
-            {"accountPlanType": "FREE", "accountPlanStatus": "ACTIVE", "accountPlanRemainingCredits": {"unit": "USD", "amount": 120}, "accountPlanExpirationDate": (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=180)).isoformat()},
-        ], credit_days=60)
-        self.assertEqual(calls, 2)
-        self.assertIn("safety margin", error)
+    def test_other_profile_and_account_cannot_reuse_owner_waiver(self):
+        for kwargs in [{"profile": "abox-other"}, {"expected_account_id": "999999999999"}]:
+            calls, error = self.execute([], **kwargs)
+            self.assertEqual(calls, 0)
+            self.assertIn("owner-confirmed", error)
 
 
 class ReleasePathTests(ReleaseFixture):

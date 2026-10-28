@@ -1,96 +1,153 @@
-# Proposed NixOS encrypted Terraform workspace
+# NixOS file-backed LUKS2 workspace
 
-**Preparation only. Do not execute provisioning commands below without separate
-approval.** No file/container was formatted, mapping opened, mount created, swap
-disabled, or privileged system configuration changed during this review.
+**Viable with owner-authenticated setup; not activated.** The commands below are
+prepared for the owner's normal host terminal, outside the agent sandbox. Tool
+acquisition, module loading, swap changes, loop allocation, file formatting and
+mounting require explicit owner authorization. None was performed in this review.
+Only the newly allocated regular file and its loop/mapped devices may be formatted;
+no existing disk, partition, filesystem or system configuration is to be modified.
 
-The host is NixOS 26.05. Nix/nix-shell, losetup, mkfs.ext4, mount, findmnt and
-systemd-cryptsetup are present. `cryptsetup` is not on PATH; realized cryptsetup
-2.8.6/2.8.7 store entries inspected contain libraries/locales, not the CLI. Nix
-derivation inspection was sandbox-denied at the daemon socket. No package was
-downloaded or installed. An approved ephemeral `nix-shell -p cryptsetup` is the
-minimal tooling option; select/pin the installed system's nixpkgs revision before
-use. Do not edit `configuration.nix` or run `nixos-rebuild` for this task.
-`dm_mod` is visible, but `dm_crypt` and `/dev/mapper/control` are not visible in
-the current sandbox. Host device-mapper access/kernel support must be checked by
-the owner before approving container activation; no module was loaded here.
+## Verified host evidence
 
-Recommend a **1 GiB regular-file LUKS2 container** outside the checkout, mounted
-only during Terraform work. It avoids partition changes. Keep only Terraform
-source/provider metadata/state/plans there; use the existing immutable provider
-cache rather than putting application builds or Docker layers on this small volume.
-The backing ext4 stores encrypted container bytes. A passphrase entered at the
-cryptsetup prompt unlocks it; store recovery information independently in the
-owner's password manager. Never use a key file on the unencrypted host disk.
-See [NixOS encryption guidance](https://nixos.org/manual/nixos/stable/#sec-luks-file-systems)
-and the [cryptsetup luksFormat manual](https://gitlab.com/cryptsetup/cryptsetup/-/blob/v2.8.7/man/cryptsetup-luksFormat.8.adoc).
+- NixOS 26.05, kernel 6.18.53; user UID 1001, GID 100.
+- Outside the sandbox, `/dev/mapper/control` and `/dev/loop-control` exist but are
+  not user read/write. `dm_mod` is loaded. `modinfo -n dm_crypt` finds the running
+  kernel's module; `dm_crypt` is not currently loaded. This establishes support,
+  not a successful encryption/mount test.
+- `sudo -n -l` requires a password. The permitted sudo command set was not proven;
+  the owner must authenticate interactively using `sudo -l`. Never send a password
+  to the agent or put it in a command.
+- `losetup`, `mkfs.ext4`, `mount`, `modprobe`, Nix, Python and `systemd-inhibit`
+  exist. `cryptsetup` is absent from PATH and its bin output is not realized.
+  Its existing derivation identifies cryptsetup 2.8.7. No package was installed.
+- Existing Nixpkgs source: `/nix/store/gsyv2ay8fc48l7vp1gspmk5pk65hrn5w-source`
+  (26.05). Use this immutable source for the temporary shell below; stop if it
+  has been garbage-collected rather than silently selecting another channel.
+- Host snapshot: about 26 GiB available RAM, approximately 988 KiB used on an
+  active 8 GiB plain swap partition `/dev/nvme0n1p2`; home filesystem has about
+  9 GiB free. A 1 GiB container fits. Recheck immediately before setup.
 
-## Manual creation proposal — approval required
+Use a **1 GiB regular-file LUKS2 volume** outside the repository. This is simpler
+than repartitioning or reconfiguring system boot encryption. Keep the existing
+provider cache outside it and all state, plans, backend metadata and temporary
+files inside. The running kernel/device support and disk space make it feasible;
+password-authorized setup and a real close/reopen test remain unverified.
+[NixOS manual](https://nixos.org/manual/nixos/stable/#sec-luks-file-systems),
+[cryptsetup format](https://gitlab.com/cryptsetup/cryptsetup/-/blob/v2.8.7/man/cryptsetup-luksFormat.8.adoc),
+[cryptsetup open](https://gitlab.com/cryptsetup/cryptsetup/-/blob/v2.8.7/man/cryptsetup-open.8.adoc).
 
-Run in a private terminal, after approving the CLI environment and container path.
-These commands target a **new regular file**, never an existing disk or partition.
-The exclusive shell creation prevents reuse of an existing file. Stop if any
-command fails; do not automate retries or cleanup over uncertain paths.
+## Owner-only setup — commands prepared, NOT executed
+
+First approve the temporary tool acquisition and privileged local operations.
+This shell pins the already identified Nixpkgs source and blocks sleep while the
+working shell remains open. It does not edit NixOS configuration or boot files.
 
 ```sh
-set -eu
+export ABOX_NIXPKGS=/nix/store/gsyv2ay8fc48l7vp1gspmk5pk65hrn5w-source
+test -d "$ABOX_NIXPKGS"
+nix-shell -I "nixpkgs=$ABOX_NIXPKGS" -p cryptsetup \
+  --run 'systemd-inhibit --what=sleep --mode=block --why="abox encrypted Terraform work" bash --noprofile --norc'
+```
+
+In that owner terminal, run the following **once for a new container only**.
+Do not run `luksFormat` or `mkfs` again when reopening an existing container.
+Review free RAM and space before approving temporary swap disablement.
+
+```sh
+set -euo pipefail
 umask 077
+set +o history
+unset HISTFILE TF_LOG TF_LOG_PATH TF_LOG_CORE TF_LOG_PROVIDER
+ulimit -c 0
+export LC_ALL=C
+export ABOX_REPO=/mnt/storage/projects/hospitalProject
 export ABOX_CRYPTSETUP="$(command -v cryptsetup)"
 test -x "$ABOX_CRYPTSETUP"
-export ABOX_CONTAINER="$HOME/.local/share/abox-private/terraform.luks"
-export ABOX_MOUNT="$HOME/.local/share/abox-private/work"
-mkdir -p "$HOME/.local/share/abox-private"
-chmod 700 "$HOME/.local/share/abox-private"
-test ! -e "$ABOX_CONTAINER" && test ! -L "$ABOX_CONTAINER"
+export ABOX_BASE="$HOME/.local/share/abox-private"
+export ABOX_CONTAINER="$ABOX_BASE/terraform.luks"
+export ABOX_MOUNT="$ABOX_BASE/work"
+export ABOX_SECURE_WORK="$ABOX_MOUNT/abox"
+free -m
+df -h "$HOME"
+swapon --show
+sudo -l
+# Owner-approved transient kernel/swap actions; no swap partition is reformatted.
+sudo modprobe dm_crypt
+sudo swapoff /dev/nvme0n1p2
+test -z "$(swapon --show --noheadings --output NAME)"
+test ! -L "$ABOX_BASE"
+mkdir -p "$ABOX_BASE"
+chmod 700 "$ABOX_BASE"
+test "$(stat -c %u "$ABOX_BASE")" = "$(id -u)"
+test ! -e "$ABOX_CONTAINER"
+test ! -L "$ABOX_CONTAINER"
 (set -C; : > "$ABOX_CONTAINER")
-truncate -s 1G "$ABOX_CONTAINER"
-test -f "$ABOX_CONTAINER" && test ! -L "$ABOX_CONTAINER"
+# Reserve actual disk space, not a sparse promise.
+fallocate --length 1G "$ABOX_CONTAINER"
+test -f "$ABOX_CONTAINER"
 test ! -e /dev/mapper/abox-tf-work
-sudo "$ABOX_CRYPTSETUP" luksFormat --type luks2 "$ABOX_CONTAINER"
-sudo "$ABOX_CRYPTSETUP" open --type luks2 "$ABOX_CONTAINER" abox-tf-work
-sudo "$ABOX_CRYPTSETUP" status abox-tf-work
-# Verify the mapping's backing file is the newly approved container BEFORE mkfs.
-sudo losetup --list --output NAME,BACK-FILE
-sudo mkfs.ext4 /dev/mapper/abox-tf-work
+# Allocate a loop device for THIS newly created file; verify before formatting.
+export ABOX_LOOP="$(sudo losetup --find --show --nooverlap "$ABOX_CONTAINER")"
+case "$ABOX_LOOP" in /dev/loop[0-9]*) ;; *) exit 1 ;; esac
+test "$(sudo losetup --noheadings --output BACK-FILE "$ABOX_LOOP")" = "$ABOX_CONTAINER"
+sudo "$ABOX_CRYPTSETUP" luksFormat --type luks2 "$ABOX_LOOP"
+sudo "$ABOX_CRYPTSETUP" isLuks --type luks2 "$ABOX_LOOP"
+sudo "$ABOX_CRYPTSETUP" open --type luks2 "$ABOX_LOOP" abox-tf-work
+test "$(sudo "$ABOX_CRYPTSETUP" status abox-tf-work | awk '$1 == "device:" {print $2}')" = "$ABOX_LOOP"
+sudo mkfs.ext4 -L abox-tf-work /dev/mapper/abox-tf-work
 mkdir -m 700 "$ABOX_MOUNT"
 sudo mount -o nosuid,nodev /dev/mapper/abox-tf-work "$ABOX_MOUNT"
 sudo chown "$(id -u):$(id -g)" "$ABOX_MOUNT"
 chmod 700 "$ABOX_MOUNT"
+mkdir -m 700 "$ABOX_SECURE_WORK"
+python3 "$ABOX_REPO/infra/aws-state/check-workspace.py" --path "$ABOX_SECURE_WORK"
 ```
 
-Terraform providers are executables, so this mount permits execution while
-retaining `nosuid,nodev`. Prefer the existing immutable provider cache outside
-the volume to minimize space and avoid unnecessary downloads.
-No fstab/crypttab entry, boot unlock, discard or automatic key management is needed.
+The passphrase is entered only at cryptsetup's prompt; use a unique strong value
+and keep recovery information in an independent owner-controlled password manager.
+Never write a plaintext key file to the unencrypted host. No discard, fstab,
+crypttab or automatic boot unlock is needed. `nosuid,nodev` is used with executable
+providers; a `noexec` volume would block providers stored there.
 
-## Independent acceptance gates
+## Acceptance and clean close/reopen
 
-1. Confirm `cryptsetup isLuks --type luks2 "$ABOX_CONTAINER"`, inspect
-   `cryptsetup status`, `findmnt -T "$ABOX_MOUNT"`, and `lsblk`/loop backing-file
-   evidence. An ext4 filesystem *inside* the mapped LUKS device is expected; plain
-   ext4 without the dm-crypt backing proof is insufficient.
-2. Swap is currently a plain partition `/dev/nvme0n1p2`, 8 GiB. Before sensitive
-   work, separately approve temporary swap disablement after assessing available
-   RAM, or configure verified encrypted swap as a separate system task. Do not
-   disable swap automatically. No hibernation/suspend-to-disk while unlocked.
-3. Verify private ownership/permissions, no automatic sync/indexing/backups of the
-   unlocked mount, core dumps disabled and Terraform debug logs off. Terminal,
-   shell/editor history and scrollback must not capture plan/state values on the
-   unencrypted host. Credentials remain short-lived and outside Terraform files.
-4. Demonstrate a synthetic file survives close/reopen; never use real secrets to
-   test. Back up the LUKS header with `cryptsetup luksHeaderBackup` to independently
-   encrypted recovery storage; protect and label it with the container identity.
-   Header backup, recovery passphrase and encrypted container must be recoverable
-   outside this workstation. Test recovery before trusting the only state copy.
-5. Set `ABOX_SECURE_WORK` to a directory inside the verified mount. Copy both roots
-   there; keep cwd, `TF_DATA_DIR`, `TMPDIR`, migration backups and error state inside.
-   Run tools only after verifying the expected mount is still active; an unmounted
-   directory would write plaintext onto the host filesystem.
+Before storing sensitive files, write a synthetic marker on the volume, leave the
+mount, unmount, close/detach, reopen **without formatting**, and check the marker.
+Use these close commands only after every process using the volume has exited:
 
-For later close/reopen: exit all shells/processes using the mount, unmount it,
-then `cryptsetup close abox-tf-work`. Do not force unmount, remove a busy mapping,
-or delete failed-operation state. Reopen with `cryptsetup open`, mount and repeat
-the backing/encryption/swap checks before every session. Container encryption
-protects at rest, not from a compromised machine while unlocked.
+```sh
+printf 'synthetic workspace test\n' > "$ABOX_SECURE_WORK/synthetic-marker"
+sync
+cd "$HOME"
+sudo umount "$ABOX_MOUNT"
+sudo "$ABOX_CRYPTSETUP" close abox-tf-work
+sudo losetup --detach "$ABOX_LOOP"
+# Reopen the same regular file. NO luksFormat/mkfs on this path.
+export ABOX_LOOP="$(sudo losetup --find --show --nooverlap "$ABOX_CONTAINER")"
+test "$(sudo losetup --noheadings --output BACK-FILE "$ABOX_LOOP")" = "$ABOX_CONTAINER"
+sudo "$ABOX_CRYPTSETUP" isLuks --type luks2 "$ABOX_LOOP"
+sudo "$ABOX_CRYPTSETUP" open --type luks2 "$ABOX_LOOP" abox-tf-work
+sudo mount -o nosuid,nodev /dev/mapper/abox-tf-work "$ABOX_MOUNT"
+python3 "$ABOX_REPO/infra/aws-state/check-workspace.py" --path "$ABOX_SECURE_WORK"
+grep -Fx 'synthetic workspace test' "$ABOX_SECURE_WORK/synthetic-marker"
+```
 
-Until all checks independently pass, local state/plan storage stays **NO-GO**.
+Keep swap disabled and the sleep inhibitor open throughout sensitive work. Run
+`check-workspace.py --require-cwd` before every Terraform operation as described in
+[the planning checklist](planning-checklist.md). It rejects active swap, a plain
+unmounted fallback, loose permissions, the wrong mapping, and cwd/temp paths outside
+this volume. It is a read-only guard, not a substitute for the owner LUKS2 and
+backing-file checks above. Terminal/editor backups and scrollback must not persist
+plan/state content to the unencrypted host; use this private non-recorded session.
+
+Back up the container/LUKS header and unlock recovery information to independently
+protected storage before relying on the sole bootstrap state copy. Do not dump
+volume keys or log cryptsetup debugging. After work, stop Terraform/editors,
+unmount, close and detach as above; only then restore the initially active swap
+with `sudo swapon /dev/nvme0n1p2` and exit the inhibited shell. Do not force a busy
+unmount or discard `errored.tfstate`. If any command fails, stop and inspect; do
+not rerun the creation block against an existing file or mapping.
+
+**State-storage status remains NO-GO until this actual activation and verification
+succeeds. Credit expiry/applicability verification is owner-waived and is not part
+of this workspace gate.**

@@ -10,6 +10,14 @@ supersedes the earlier Singapore region restriction. Sydney EC2, S3 and SSM
 read-only checks now pass; bucket creation, policy attachment and migration remain
 separately gated. Keep both the state bucket and EC2 in the assigned Sydney region.
 
+**Current owner decision:** individual credit-expiry and service-specific credit
+applicability verification are waived under [ABOX-RISK-001](../../docs/aws-demo-risks.md).
+They are not verified and no longer block planning or deployment. Fresh identity,
+FREE/ACTIVE, minimum balance/account-plan window, Sydney service access and
+verified encrypted storage remain required. Follow the [guarded planning checklist](planning-checklist.md)
+for the complete sequence and the [LUKS setup procedure](luks-workspace.md) for
+owner-only local activation. No provisioning or migration is authorized here.
+
 ## Design
 
 Use Terraform throughout. This separate bootstrap root creates one dedicated S3
@@ -119,7 +127,7 @@ on SSDs, snapshots or copy-on-write filesystems.
 
 ## Later bootstrap commands — NOT executed or authorized now
 
-First verify Sydney service access, individual credit expiry and encrypted
+First verify Sydney service access, minimum balance/account-plan window and encrypted
 workspace/swap protections. Refresh STS identity; if it differs, stop. Set
 `ABOX_SECURE_WORK` to a verified encrypted directory outside this repository.
 The following checks verify paths/permissions only, **not** encryption.
@@ -182,7 +190,9 @@ bucket in its private `backend.hcl`. Set `TF_DATA_DIR` to that directory's `.ter
 For a confirmed new application state, `terraform init -backend-config=backend.hcl`
 initializes the prepared S3 backend. Existing local state requires a separately
 reviewed migration with its original backend metadata preserved. Keep
-`free_plan_verified=false` until **all** deployment gates pass. No application plan
+`free_plan_verified=false` until the pre-plan account, balance/account-plan window,
+Sydney service-access and secure-storage gates pass. Image publication and live
+deployment acceptance remain later gates. No application plan
 or deployment becomes authorized by approving the state bucket alone.
 
 ## Cost and verification
@@ -201,8 +211,9 @@ Example allowance: **1 GB total current/historical objects**, **2,000 Tier-1** a
 before taxes, internet transfer, optional auditing/metrics and additional versions.
 Budget **$0.10/month** for a small manually operated backend; this is not a cap.
 Unexpired historical versions keep accruing storage costs after EC2 stops.
-Actual usable credits/grant expiry and service eligibility must be rechecked before
-creation. Preserve the $5 budget and the separate proposed abox gross-cost alerts.
+Balance/account-plan window and service access must be rechecked before creation;
+grant expiry and applicability remain owner-waived under ABOX-RISK-001. Preserve
+the $5 budget and the separate proposed abox gross-cost alerts.
 
 Local checks use cached provider packages and credentials disabled. `terraform
 validate` checks both roots; `terraform test` in this root uses only a mocked AWS
@@ -230,6 +241,6 @@ validator installation or extra project dependencies are required.
 In the latest local remediation review, both root validations, all three mocked
 security tests, formatting and the expanded 16-test offline deployment suite were
 executed successfully again. No IAM attachment, live native lock contention,
-S3 recovery, real plan or migration was performed. Scope/role selection, exact credit-grant expiry, encrypted local storage and live
+S3 recovery, real plan or migration was performed. Scope/role selection, encrypted local storage and live
 backend checks must independently pass before this design becomes GO. Sydney
 regional read access has now passed; it does not prove provisioning permissions.

@@ -5,6 +5,12 @@
 settings and prices below describe historical Singapore preparation; they are
 superseded by the current Terraform, deployment runbook and Sydney report.
 
+**Credit-check update:** individual credit-expiry and service-specific credit
+applicability verification are owner-waived under [ABOX-RISK-001](aws-demo-risks.md).
+Historical grant-date requirements below are superseded; waived does not mean
+verified. Use the [guarded planning checklist](../infra/aws-state/planning-checklist.md)
+for current account/balance/plan-window and secure-storage requirements.
+
 **State-storage update (2026-10-28):** the [dedicated S3 backend preparation](../infra/aws-state/README.md)
 supersedes the local-backend design below. Both remote state and protected local
 plan handling remain NO-GO until separately approved bootstrap and verified

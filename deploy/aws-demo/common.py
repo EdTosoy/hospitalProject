@@ -9,6 +9,10 @@ import re
 import subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parent
+TARGET_ACCOUNT_ID = "747240980964"
+TARGET_PROFILE = "abox-747240980964"
+# Explicit owner decision; never describe these two checks as verified.
+CREDIT_RISK_WAIVER_ID = "ABOX-RISK-001"
 
 
 def config():
@@ -71,9 +75,13 @@ def host_identity(values):
 def owner_approval(values):
     record = json.loads(pathlib.Path("/etc/abox/account-approval.json").read_text())
     now = dt.datetime.now(dt.timezone.utc)
-    if (record.get("account_sha256") != hashlib.sha256(values["EXPECTED_ACCOUNT_ID"].encode()).hexdigest()
+    if (values["EXPECTED_ACCOUNT_ID"] != TARGET_ACCOUNT_ID
+            or record.get("account_sha256") != hashlib.sha256(values["EXPECTED_ACCOUNT_ID"].encode()).hexdigest()
             or record.get("plan") != "FREE" or record.get("status") != "ACTIVE"
-            or not record.get("credit_runway_verified")
+            or record.get("credit_balance_and_plan_window_verified") is not True
+            or record.get("credit_expiry_verification") != "waived_by_owner"
+            or record.get("credit_applicability_verification") != "waived_by_owner"
+            or record.get("credit_risk_waiver_id") != CREDIT_RISK_WAIVER_ID
             or record.get("region") != "ap-southeast-2"
             or now >= dt.datetime.fromisoformat(record["valid_until"])):
         raise RuntimeError("Fresh owner Free-plan/account approval is required")

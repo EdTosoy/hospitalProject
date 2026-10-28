@@ -5,6 +5,14 @@
 Singapore denial evidence below is historical; do not use its old target-region
 prerequisites as current instructions. Current commands below now target Sydney.
 
+**Credit-check update:** the owner has waived individual credit-expiry and
+service-specific credit applicability verification under [ABOX-RISK-001](aws-demo-risks.md).
+Historical requirements for a grant date below are superseded. Use the
+[guarded planning checklist](../infra/aws-state/planning-checklist.md); fresh
+identity, FREE/ACTIVE, minimum balance/account-plan window and Sydney access
+checks still apply. Encrypted storage activation and backend creation/migration
+remain outstanding and separately authorized.
+
 **Decision: NO-GO. No Terraform plan generated.** Singapore API access, a successful
 native frontend probe, and verified encrypted state storage are required before
 planning. Full EC2 remains the selected platform; Lightsail is reserved for FATS.
@@ -292,7 +300,6 @@ cp -n infra/aws-demo/terraform.tfvars "$ABOX_PRIVATE_DIR/demo.tfvars"
 aws --profile abox-747240980964 --region ap-southeast-2 sts get-caller-identity
 python3 deploy/aws-demo/preflight.py \
   --profile abox-747240980964 --expected-account-id 747240980964 \
-  --credit-expiration-date "${ABOX_CREDIT_EXPIRATION_DATE:?Set owner-verified earliest usable credit expiry YYYY-MM-DD}" \
   --output "$ABOX_PRIVATE_DIR/account-approval.json"
 # Use the encrypted working-copy/bootstrap/migration procedure in infra/aws-state/README.md.
 # These variables must point inside the independently verified encrypted workspace.
