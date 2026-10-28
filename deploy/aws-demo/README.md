@@ -6,9 +6,16 @@ Regional discovery and native ARM64 checks pass; encrypted local storage and the
 remaining independent deployment gates still require completion before provisioning.
 
 **State-storage update:** use the prepared [dedicated S3 backend runbook](../../infra/aws-state/README.md).
-It supersedes the local-backend commands below. Local plans and temporary state
+It supersedes the earlier local-backend procedure. Local plans and temporary state
 still require verified encrypted external storage; NO-GO remains in force. No
 bootstrap creation or migration is authorized by these preparation files.
+
+**Current planning procedure:** follow the [guarded planning checklist](../../infra/aws-state/planning-checklist.md).
+The owner has waived individual credit-expiry and service-specific credit
+applicability verification under [ABOX-RISK-001](../../docs/aws-demo-risks.md).
+These checks are not deployment blockers and must not be reported as verified.
+Fresh account identity, FREE/ACTIVE status, minimum balance/account-plan window,
+Sydney service access and verified encrypted storage remain required.
 
 **Phase 3A is files and local verification only. Do not execute provisioning,
 publication, or host deployment commands during Phase 3A.** The new account will
@@ -16,7 +23,8 @@ be configured later. No default/Flow account may be used.
 
 The later requested read-only `kuyas-general` check returned **PAID / ACTIVE**
 (masked account ending 0564). Do not use it for this Free-plan deployment or try
-to change its plan. The intended Free account still needs separate verification.
+to change its plan. The intended Free account is pinned above; refresh its
+read-only verification immediately before deployment.
 
 See [the preparation report](../../docs/aws-demo-preparation.md) for cost,
 eligibility, verification evidence, architecture, and the Phase 3B decision.
@@ -30,13 +38,16 @@ Before **any** resource creation or image publication, obtain an explicit Phase
 
 1. Owner verifies the newly created account, remains on **Free**, and never
    creates/joins Organizations, uses Control Tower, or chooses an upgrade. Use a
-   dedicated MFA-backed `abox-*` CLI profile. Do not create root access keys or
-   bootstrap Organizations/Identity Center as a shortcut. No existing profile is
-   assumed to be the correct account.
+   dedicated MFA-backed `abox-747240980964` CLI profile. Do not create root access
+   keys or
+   bootstrap Organizations/Identity Center as a shortcut. Confirm caller identity
+   matches account 747240980964 before any other account reads.
 2. Verify FREE/ACTIVE, at least $75 in available credits ($50 for two months plus
-   a $25 reserve), at least 69 days before both plan and earliest usable-credit
-   expiry (62 demo days plus seven-day margin). Confirm EC2/T4g, gp3 encryption, S3, SSM Session Manager, and standard
-   Parameter Store availability under Free. If any requires Paid, **stop**.
+   a $25 reserve), at least 69 days before account-plan expiry
+   (62 demo days plus seven-day margin). Individual credit expiry/applicability
+   checks are owner-waived under ABOX-RISK-001. Confirm EC2/T4g, gp3 encryption,
+   S3, SSM Session Manager, and standard Parameter Store availability under Free.
+   If any requires Paid, **stop**.
 3. Owner confirms vCPU quota of at least 2, available T4g small capacity/AZ,
    supported AL2023 ARM64 AMI, the monthly gross-cost budget, notifications, and a
    dated teardown appointment. No quota-increase, paid-instance, SSH, or paid
@@ -73,38 +84,37 @@ chmod 700 "$ABOX_PRIVATE_DIR"
 python3 deploy/aws-demo/preflight.py \
   --profile abox-747240980964 \
   --expected-account-id 747240980964 \
-  --credit-expiration-date "${ABOX_CREDIT_EXPIRATION_DATE:?Set owner-verified earliest credit expiry YYYY-MM-DD}" \
   --output "$ABOX_PRIVATE_DIR/account-approval.json"
 ```
 
-The script checks identity **first**, then Free-plan state/runway, ARM64 instance
-specification/offering, Standard On-Demand vCPU quota, and the public AL2023 AMI
+The script checks identity **first**, then Free-plan status, minimum balance and
+account-plan window, ARM64 instance specification/offering, Standard On-Demand
+vCPU quota, and the public AL2023 AMI
 parameter. It makes read-only calls. An unknown/denied check blocks approval.
 It does not print identity ARNs, account IDs, credit amounts, or credentials. The
-three-hour approval contains an account hash and pass/fail assertions, not billing
-responses. It does not prove all service permissions or SSM connectivity before
-an instance exists. Confirm these with the owner; do not upgrade to resolve them.
+three-hour approval contains an account hash, verified balance/plan-window
+assertion and explicit credit-expiry/applicability waiver fields, not billing
+responses. Old approval records must be refreshed. It does not prove all service
+permissions or SSM connectivity before an instance exists. Confirm these with the
+owner; do not upgrade to resolve them.
 
 Refresh the approval immediately before deployment. Copy it securely to
 `/etc/abox/account-approval.json` on the eventual host, root-owned mode 0600.
 
 ## Terraform plan and later authorized provisioning
 
-Copy `infra/aws-demo/terraform.tfvars.example` to the encrypted private directory.
-Set the actual account ID, the dedicated profile, a unique non-secret bucket
-suffix, a teardown date before account expiry, and `free_plan_verified=true`
-**only after** the gates above pass. The shipped example intentionally blocks
-planning. Terraform's provider also rejects any account ID other than the one
-explicitly supplied.
+Use the [guarded planning checklist](../../infra/aws-state/planning-checklist.md)
+to copy the Terraform roots and private tfvars into the verified encrypted
+workspace, review the bootstrap plan, and initialize S3 only after the separate
+creation/migration approvals. Do not initialize the application from this checkout
+or pass local-backend `path` configuration to its S3 backend.
 
-```sh
-terraform -chdir=infra/aws-demo init -input=false \
-  -backend-config="path=$ABOX_PRIVATE_DIR/terraform.tfstate"
-terraform -chdir=infra/aws-demo validate
-terraform -chdir=infra/aws-demo plan -input=false \
-  -var-file="$ABOX_PRIVATE_DIR/demo.tfvars" \
-  -out="$ABOX_PRIVATE_DIR/reviewed.tfplan"
-```
+Keep the copied `free_plan_verified=false` until fresh identity, FREE/ACTIVE,
+minimum balance/account-plan window, Sydney service access and secure-storage
+checks pass. Image publication and live deployment acceptance are later gates;
+they do not prevent reviewing a plan. The credit waiver does not authorize
+provisioning. The checklist saves `reviewed-ec2.tfplan` inside the encrypted
+application working directory.
 
 Review the plan privately. Expect exactly one T4g small, one 30-GiB encrypted gp3
 root disk, Standard CPU credits, no key pair/SSH ingress, only TCP 80/443 ingress,
@@ -119,9 +129,11 @@ Only after explicit owner approval of that exact plan, in Phase 3B:
 
 ```sh
 # NOT A PHASE 3A COMMAND. This creates resources and consumes credits.
-terraform -chdir=infra/aws-demo apply "$ABOX_PRIVATE_DIR/reviewed.tfplan"
-terraform -chdir=infra/aws-demo output instance_id
-terraform -chdir=infra/aws-demo output public_ipv4
+cd "$ABOX_SECURE_WORK/application"
+python3 "$ABOX_REPO/infra/aws-state/check-workspace.py" --path "$ABOX_SECURE_WORK" --require-cwd
+terraform apply reviewed-ec2.tfplan
+terraform output instance_id
+terraform output public_ipv4
 ```
 
 No command above was executed against AWS in Phase 3A. Do not run the legacy
