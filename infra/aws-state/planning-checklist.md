@@ -23,6 +23,7 @@ python3 "$ABOX_REPO/infra/aws-state/check-workspace.py" --path "$ABOX_SECURE_WOR
 export TMPDIR="$ABOX_SECURE_WORK/tmp"
 mkdir -m 700 "$TMPDIR" "$ABOX_SECURE_WORK/bootstrap" "$ABOX_SECURE_WORK/application"
 unset TF_LOG TF_LOG_PATH TF_LOG_CORE TF_LOG_PROVIDER
+unset TF_CLI_ARGS TF_CLI_ARGS_init TF_CLI_ARGS_plan TF_WORKSPACE
 cp "$ABOX_REPO"/infra/aws-state/*.tf "$ABOX_REPO/infra/aws-state/.terraform.lock.hcl" "$ABOX_SECURE_WORK/bootstrap/"
 cp "$ABOX_REPO/infra/aws-state/backend_override.tf.example" "$ABOX_SECURE_WORK/bootstrap/"
 cp "$ABOX_REPO"/infra/aws-demo/*.tf "$ABOX_REPO/infra/aws-demo/user-data.sh" "$ABOX_REPO/infra/aws-demo/.terraform.lock.hcl" "$ABOX_SECURE_WORK/application/"
@@ -38,6 +39,23 @@ resume its existing backend metadata/state, never overwrite it blindly. If the
 ignored source tfvars file is unavailable, prepare the example privately with the
 exact account/profile, unique bucket suffix and agreed teardown date. No secret,
 grant-expiry date or fictional verification assertion is required.
+
+All `.tfstate`/`.tfstate.backup`, saved plans, `errored.tfstate`, private tfvars,
+backend metadata/configuration and temporary files belong in this encrypted
+working copy. `TF_DATA_DIR` redirects metadata, not every state/plan output; the
+encrypted cwd and explicit output paths remain necessary. Do not override state,
+plan, log or backup paths to the checkout or plain `/tmp`. Keep terminal capture,
+editor swap/backups and core dumps disabled for this shell. The read-only guard
+also checks actual mounts for cwd, `TMPDIR` and `TF_DATA_DIR`, including plaintext
+submounts. It observes current conditions; it cannot prevent later remounts or
+privileged changes. Keep the same per-root `TF_DATA_DIR` for the whole workflow.
+
+The owner-only workspace acceptance includes synthetic state/plan/temp/backup
+files, a close/reopen checksum check and a closed ciphertext recovery copy.
+Choose and verify the independent recovery destination before proceeding.
+[Terraform's environment reference](https://developer.hashicorp.com/terraform/cli/config/environment-variables)
+describes `TF_DATA_DIR`, logging and injected CLI arguments. This task does not
+execute preflight AWS reads, backend initialization or real plans.
 
 ## 2. Bootstrap plan only — no AWS resources yet
 
