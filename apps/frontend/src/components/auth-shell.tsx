@@ -7,6 +7,7 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { BrandLogo } from "@/components/brand-logo";
+import { DemoAccounts } from "@/components/demo-accounts";
 
 export function AuthShell({
   children,
@@ -17,7 +18,7 @@ export function AuthShell({
 }) {
   return (
     <main className="min-h-screen lg:grid lg:grid-cols-2">
-      <section className="hidden flex-col justify-between border-r bg-brand-soft p-12 lg:flex">
+      <section className="hidden flex-col justify-between gap-8 border-r bg-brand-soft p-12 lg:flex">
         <Link
           href="/"
           aria-label="abox home"
@@ -51,6 +52,9 @@ export function AuthShell({
               </p>
             ))}
           </div>
+          <div className="mt-6">
+            <DemoAccounts />
+          </div>
         </div>
         <p className="text-xs text-muted-foreground">
           abox · Hospital Management Platform
@@ -69,6 +73,9 @@ export function AuthShell({
         </div>
         <div className="flex flex-1 items-center justify-center py-8">
           {children}
+        </div>
+        <div className="mx-auto mb-6 w-full max-w-md lg:hidden">
+          <DemoAccounts />
         </div>
         <p className="text-center text-xs text-muted-foreground">
           {registration
